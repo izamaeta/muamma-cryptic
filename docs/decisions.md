@@ -49,3 +49,24 @@ API, the same as a missing puzzle, so their existence is not revealed.
 Client code lives in static files rather than inline scripts, to allow a
 strict Content-Security-Policy later. Server text is inserted with
 `textContent`, never as HTML.
+
+
+
+
+## Player identity
+
+The anonymous player id is stored in Flask's signed session cookie, so it
+cannot be altered on the client. The cookie is HttpOnly, SameSite=Lax,
+Secure in production and lasts 400 days.
+
+## Recording play
+
+Guesses with the wrong letter count are rejected without being recorded,
+since they are mostly typos. Each counted guess is logged as an event with
+the normalized guess. A finished play rejects further guesses with 409.
+Solution text is rendered into the page only for players who finished
+the puzzle.
+
+Two simultaneous first requests from the same player could both try to
+create a play row; the unique constraint rejects the second one. This is
+rare enough to leave for now.
