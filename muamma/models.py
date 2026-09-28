@@ -31,7 +31,7 @@ class Puzzle(db.Model):
     kind: Mapped[str] = mapped_column(String(16))
     status: Mapped[str] = mapped_column(String(16), default="draft")
     clue: Mapped[str] = mapped_column(Text)
-    definition: Mapped[str] = mapped_column(String(200))
+    definition: Mapped[str | None] = mapped_column(String(200))
     answer: Mapped[str] = mapped_column(String(64))
     enumeration: Mapped[str] = mapped_column(String(32))
     hints: Mapped[list[str]] = mapped_column(JSON, default=list)
