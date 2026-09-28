@@ -6,7 +6,8 @@ from sqlalchemy import select
 
 from muamma import clock
 from muamma.extensions import db
-from muamma.models import Puzzle
+from muamma.models import Admin, Puzzle
+from muamma.security import hash_password
 
 DEMO_DAILY = [
     (
@@ -89,3 +90,23 @@ def seed_demo():
 
     db.session.commit()
     click.echo(f"Added {added} demo puzzles.")
+
+MIN_PASSWORD_LENGTH = 12
+
+@click.command("create-admin")
+@click.argument("email")
+@click.password_option()
+@with_appcontext
+def create_admin(email, password):
+    """Create an admin account."""
+    email = email.strip().lower()
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise click.ClickException(
+            f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
+        )
+    if db.session.scalar(select(Admin.id).where(Admin.email == email)):
+        raise click.ClickException("An admin with this email already exists.")
+
+    db.session.add(Admin(email=email, password_hash=hash_password(password)))
+    db.session.commit()
+    click.echo(f"Created admin {email}.")
