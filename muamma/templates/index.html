@@ -1,18 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Muamma</h1>
+  <header class="top">
+    <h1>Muamma</h1>
+    <p class="streak">Seri: <span class="streak-count">{{ streak }}</span></p>
+  </header>
+
   {% if puzzle %}
+    {% set finished = play and play.status != "in_progress" %}
     <section class="puzzle" data-puzzle-id="{{ puzzle.id }}">
       <p class="clue">{{ puzzle.clue }} <span class="enumeration">({{ puzzle.enumeration }})</span></p>
-      <form class="guess-form">
+      <form class="guess-form" {% if finished %}hidden{% endif %}>
         <input name="guess" autocomplete="off" autocapitalize="characters" maxlength="64" required>
         <button type="submit">Kontrol et</button>
       </form>
-      <p class="feedback" aria-live="polite"></p>
-      <div class="solution" hidden>
-        <p class="answer"></p>
-        <p class="explanation"></p>
+      <p class="feedback" aria-live="polite">{% if play and play.status == "solved" %}Doğru!{% endif %}</p>
+      <div class="solution" {% if not finished %}hidden{% endif %}>
+        <p class="answer">{% if finished %}{{ puzzle.answer }}{% endif %}</p>
+        <p class="explanation">{% if finished %}{{ puzzle.explanation }}{% endif %}</p>
       </div>
     </section>
   {% else %}

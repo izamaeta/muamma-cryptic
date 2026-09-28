@@ -5,6 +5,12 @@ if (section) {
   const input = form.querySelector("input");
   const feedback = section.querySelector(".feedback");
   const solution = section.querySelector(".solution");
+  const streak = document.querySelector(".streak-count");
+
+  const messages = {
+    wrong_length: "Harf sayısı tutmuyor.",
+    finished: "Bu bulmacayı zaten bitirdin.",
+  };
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -18,8 +24,7 @@ if (section) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      feedback.textContent =
-        data.error === "wrong_length" ? "Harf sayısı tutmuyor." : "Bir sorun oluştu, tekrar dene.";
+      feedback.textContent = messages[data.error] ?? "Bir sorun oluştu, tekrar dene.";
       return;
     }
 
@@ -34,5 +39,6 @@ if (section) {
     solution.querySelector(".answer").textContent = data.answer;
     solution.querySelector(".explanation").textContent = data.explanation;
     solution.hidden = false;
+    streak.textContent = data.streak;
   });
 }
