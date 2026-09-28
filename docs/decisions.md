@@ -178,3 +178,19 @@ in place. Tiles are hidden from screen readers and a visually hidden
 text pattern carries the same information. Letters appear in the page
 source only after they are revealed or the puzzle is finished, and the
 definition highlight only after the first hint or on finish.
+
+## Sharing and countdown
+
+Finished daily puzzles offer a spoiler-free summary: date, number of
+guesses, assists used and streak, never the answer. The text is built on
+the server so it is testable and identical after a reload. Phones use the
+native share sheet; other browsers copy to the clipboard.
+
+The countdown to the next puzzle uses seconds computed on the server in
+the app timezone, since the visitor's clock or timezone may differ.
+
+## How to play
+
+A dedicated page explains definitions, wordplay types and their indicator
+words with Turkish examples. First-time visitors (no player yet) see a
+link to it on the home page.
