@@ -1,4 +1,12 @@
-from flask import abort, redirect, render_template, url_for
+from flask import (
+    Response,
+    abort,
+    current_app,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from muamma import clock
 from muamma.extensions import db
@@ -11,14 +19,24 @@ from muamma.stats import player_stats
 
 
 @bp.app_context_processor
-def inject_streak():
+def inject_globals():
     player = current_player()
-    return {"streak": player.displayed_streak(clock.today()) if player else 0}
-
+    site_url = current_app.config["SITE_URL"]
+    return {
+        "streak": player.displayed_streak(clock.today()) if player else 0,
+        "site_url": site_url,
+        "canonical_url": site_url + request.path,
+    }
 
 @bp.app_errorhandler(429)
 def too_many_requests(error):
     return render_template("429.html"), 429
+
+
+
+@bp.app_errorhandler(404)
+def page_not_found(error):
+    return render_template("404.html"), 404
 
 
 @bp.get("/")
@@ -61,6 +79,35 @@ def stats():
 @bp.get("/nasil-oynanir")
 def how_to_play():
     return render_template("how_to_play.html")
+
+
+
+@bp.get("/gizlilik")
+def privacy():
+    return render_template("privacy.html", contact_email=current_app.config["CONTACT_EMAIL"])
+
+
+@bp.get("/robots.txt")
+def robots():
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin/",
+        "Disallow: /api/",
+        f"Sitemap: {current_app.config['SITE_URL']}/sitemap.xml",
+    ]
+    return Response("\n".join(lines) + "\n", mimetype="text/plain")
+
+
+@bp.get("/sitemap.xml")
+def sitemap():
+    site = current_app.config["SITE_URL"]
+    paths = [
+        url_for("main.index"),
+        url_for("main.how_to_play"),
+        url_for("main.privacy"),
+    ]
+    body = render_template("sitemap.xml", urls=[site + path for path in paths])
+    return Response(body, mimetype="application/xml")
 
 
 @bp.get("/health")

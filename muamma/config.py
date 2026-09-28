@@ -24,6 +24,9 @@ class Config:
 
     TRUSTED_PROXY_HOPS = int(os.environ.get("TRUSTED_PROXY_HOPS", "0"))
     HSTS_ENABLED = _flag("HSTS_ENABLED")
+    
+    SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:5000").rstrip("/")
+    CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "")
 
 
 class TestConfig(Config):
@@ -33,3 +36,5 @@ class TestConfig(Config):
     WTF_CSRF_ENABLED = False
     RATELIMIT_ENABLED = False
     RATELIMIT_STORAGE_URI = "memory://"
+    SITE_URL = "https://muamma.test"
+    CONTACT_EMAIL = "iletisim@muamma.test"
