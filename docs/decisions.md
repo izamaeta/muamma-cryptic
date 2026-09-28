@@ -194,3 +194,22 @@ the app timezone, since the visitor's clock or timezone may differ.
 A dedicated page explains definitions, wordplay types and their indicator
 words with Turkish examples. First-time visitors (no player yet) see a
 link to it on the home page.
+
+
+## Technical SEO
+
+Absolute URLs (canonical, sitemap, share cards) are built from the
+`SITE_URL` setting instead of the request host, because behind Cloudflare
+and a reverse proxy the host seen by the app is not reliable. Each page
+defines its title and description once; the Open Graph tags reuse them.
+
+Personal or empty pages (stats, practice done, errors) are marked
+`noindex`. `robots.txt` keeps crawlers out of `/admin/` and `/api/`.
+
+## Privacy page
+
+The privacy page describes what the code actually stores: one session
+cookie with an anonymous player id and CSRF token, gameplay events tied
+to that id, and IP addresses only inside short-lived rate limit counters.
+It is not a legal review; KVKK obligations should be checked before
+launch.
