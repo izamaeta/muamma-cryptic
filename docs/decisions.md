@@ -164,3 +164,17 @@ enabled in production behind HTTPS. Request bodies are capped at 64 KB.
 `X-Forwarded-*` headers are trusted only when `TRUSTED_PROXY_HOPS` is set,
 because without a real proxy in front a client could spoof its IP and
 bypass rate limits.
+
+## Visual design
+
+A newspaper-puzzle look: paper background, ink text, a deep red accent,
+a serif face for clues and a system sans-serif for the interface. Fonts
+come from the system rather than a font service, which keeps the CSP
+strict, avoids an extra request and sends no visitor data to a third
+party. Colors are CSS variables so dark mode only swaps the palette.
+
+Answer tiles mirror what the player types; revealed letters stay dimmed
+in place. Tiles are hidden from screen readers and a visually hidden
+text pattern carries the same information. Letters appear in the page
+source only after they are revealed or the puzzle is finished, and the
+definition highlight only after the first hint or on finish.
