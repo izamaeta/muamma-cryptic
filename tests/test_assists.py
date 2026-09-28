@@ -24,10 +24,12 @@ def test_first_hint_is_definition(client):
     first = post(client, puzzle, "hint").get_json()
     second = post(client, puzzle, "hint").get_json()
 
-    assert first == {"text": "Tanım: bal yapıcı", "remaining": 1}
+    assert first["text"] == "Tanım: bal yapıcı"
+    assert first["remaining"] == 1
+    assert "highlight" in first
     assert second == {"text": EXTRA_HINT, "remaining": 0}
     assert post(client, puzzle, "hint").status_code == 409
-
+    
 
 def test_letters_are_revealed_in_order(client):
     puzzle = add_puzzle()
