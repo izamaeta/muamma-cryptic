@@ -15,6 +15,8 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    
+    from muamma import models  # noqa: F401
 
     from muamma.main import bp as main_bp
 
