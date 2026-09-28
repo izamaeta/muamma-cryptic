@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Gizlilik – Muamma{% endblock %}
+{% block description %}Muamma hangi verileri tutar, neden tutar? Kısa ve açık gizlilik bilgilendirmesi.{% endblock %}
+
+{% block content %}
+  <article class="howto">
+    <h1>Gizlilik</h1>
+
+    <h2>Hesap açmadan oynarsın</h2>
+    <p>Muamma'yı oynamak için ad, e-posta ya da telefon gerekmez. İlk tahminini yaptığında tarayıcına rastgele üretilmiş bir oyuncu kimliği içeren bir çerez yerleştiririz. Serin ve istatistiklerin bu sayede hatırlanır. Kimlik seninle ilgili hiçbir bilgi içermez.</p>
+
+    <h2>Hangi çerezler var?</h2>
+    <p>Tek bir çerez kullanıyoruz: oturum çerezi. İçinde oyuncu kimliğin ve form güvenliği için bir anahtar bulunur. 400 gün geçerlidir, sadece bu site okuyabilir. Reklam ya da takip çerezi yoktur.</p>
+
+    <h2>Hangi verileri tutuyoruz?</h2>
+    <p>Oyuncu kimliğine bağlı olarak tahminlerini, aldığın ipuçlarını, açtığın harfleri, çözme zamanlarını ve serini kaydederiz. Bunları istatistiklerini göstermek ve bulmacaların ne kadar zor olduğunu anlayıp daha iyilerini yazmak için kullanırız.</p>
+
+    <h2>Üçüncü taraflar</h2>
+    <p>Sitede reklam, analiz aracı ya da dışarıdan yüklenen içerik yoktur; yazı tipleri dahil her şey kendi sunucumuzdan gelir. Siteyi yayınlamak için kullandığımız barındırma ve güvenlik hizmetleri, istekleri iletebilmek için IP adresi gibi teknik bilgileri işler.</p>
+
+    <h2>IP adresi</h2>
+    <p>Kötüye kullanımı önlemek için IP adresin, istek sayısını sınırlayan sayaçlarda en fazla bir saat tutulur ve kalıcı olarak saklanmaz.</p>
+
+    <h2>Verilerini silmek</h2>
+    <p>Tarayıcının çerezlerini sildiğinde oyuncu kimliğinle bağın kopar; bundan sonra kayıtların kimseyle eşleştirilemez. Kayıtlarının tamamen silinmesini istersen {% if contact_email %}<a href="mailto:{{ contact_email }}">{{ contact_email }}</a> adresine{% else %}bize{% endif %} yazabilirsin.</p>
+  </article>
+{% endblock %}
