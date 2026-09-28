@@ -10,12 +10,14 @@ if (section) {
   const hints = section.querySelector(".hints");
   const pattern = section.querySelector(".pattern");
   const streak = document.querySelector(".streak-count");
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
   const messages = {
     wrong_length: "Harf sayısı tutmuyor.",
     finished: "Bu bulmacayı zaten bitirdin.",
     no_more_hints: "Başka ipucu yok.",
     no_more_letters: "Daha fazla harf açılamaz.",
+    rate_limited: "Çok hızlı gidiyorsun, biraz bekle.",
   };
 
   async function post(action, body = {}) {
@@ -23,7 +25,8 @@ if (section) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content,},
+        "X-CSRFToken": csrfToken,
+      },
       body: JSON.stringify(body),
     });
     const data = await response.json().catch(() => ({}));

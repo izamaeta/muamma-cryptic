@@ -1,7 +1,9 @@
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from muamma.config import Config
-from muamma.extensions import csrf, db, login_manager, migrate
+from muamma.extensions import csrf, db, limiter, login_manager, migrate
+from muamma.headers import apply_security_headers
 
 
 def create_app(config_class=Config):
@@ -13,10 +15,16 @@ def create_app(config_class=Config):
         if not app.config.get(key):
             raise RuntimeError(f"{key} is not set")
 
+    hops = app.config["TRUSTED_PROXY_HOPS"]
+    if hops:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=hops, x_proto=hops, x_host=hops)
+
     db.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
+    app.after_request(apply_security_headers)
 
     from muamma import models  # noqa: F401
     from muamma.admin import bp as admin_bp

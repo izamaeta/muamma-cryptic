@@ -1,6 +1,7 @@
 import uuid
 
 from flask import session
+from flask_limiter.util import get_remote_address
 
 from muamma.extensions import db
 from muamma.models import Player, utcnow
@@ -29,3 +30,9 @@ def current_player(create: bool = False) -> Player | None:
         player.last_seen_at = utcnow()
 
     return player
+
+
+def player_or_ip() -> str:
+    """Rate-limit key: player id when known, otherwise client IP."""
+    player_id = session.get(SESSION_KEY)
+    return f"player:{player_id}" if player_id else f"ip:{get_remote_address()}"

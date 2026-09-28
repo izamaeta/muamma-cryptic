@@ -16,6 +16,11 @@ def inject_streak():
     return {"streak": player.displayed_streak(clock.today()) if player else 0}
 
 
+@bp.app_errorhandler(429)
+def too_many_requests(error):
+    return render_template("429.html"), 429
+
+
 @bp.get("/")
 def index():
     today = clock.today()

@@ -23,7 +23,7 @@ from muamma.admin.services import (
     stock_days,
     upcoming,
 )
-from muamma.extensions import db
+from muamma.extensions import db, limiter
 from muamma.models import Admin, Puzzle, utcnow
 from muamma.security import check_login
 
@@ -47,6 +47,7 @@ def no_index(response):
 
 
 @bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute;20 per hour", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("admin.dashboard"))
@@ -72,6 +73,7 @@ def logout():
     logout_user()
     session.pop(SESSION_KEY, None)
     return redirect(url_for("admin.login"))
+
 
 @bp.get("/")
 @login_required

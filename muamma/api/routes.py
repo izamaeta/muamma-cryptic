@@ -2,10 +2,10 @@ from flask import abort, jsonify, request
 
 from muamma import clock
 from muamma.api import bp
-from muamma.extensions import db
+from muamma.extensions import db, limiter
 from muamma.gameplay import finish_play, get_or_create_play, log_event
 from muamma.models import Puzzle
-from muamma.players import current_player
+from muamma.players import current_player, player_or_ip
 from muamma.puzzles import (
     answer_length,
     check_answer,
@@ -16,6 +16,9 @@ from muamma.puzzles import (
 from muamma.text import normalize_answer
 
 MAX_GUESS_LENGTH = 64
+API_LIMIT = "30 per minute;500 per hour"
+
+limiter.limit(API_LIMIT, key_func=player_or_ip)(bp)
 
 
 @bp.errorhandler(404)
@@ -26,6 +29,11 @@ def not_found(error):
 @bp.errorhandler(409)
 def conflict(error):
     return jsonify(error=error.description), 409
+
+
+@bp.errorhandler(429)
+def rate_limited(error):
+    return jsonify(error="rate_limited"), 429
 
 
 def _playable_or_404(puzzle_id, today):
