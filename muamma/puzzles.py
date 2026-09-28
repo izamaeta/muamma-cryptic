@@ -5,6 +5,7 @@ from sqlalchemy import select
 from muamma.extensions import db
 from muamma.models import Play, Puzzle
 from muamma.text import normalize_answer, turkish_upper
+from muamma.share import finish_details
 
 def daily_puzzle_for(day: date) -> Puzzle | None:
     return db.session.scalar(
@@ -78,6 +79,10 @@ def puzzle_view(puzzle: Puzzle, play: Play | None, today: date) -> dict:
     revealed = play.letters_revealed if play else 0
     shown = answer_length(puzzle.enumeration) if finished else revealed
 
+    details = {"share": None, "next_in": None}
+    if finished:
+        details = finish_details(puzzle, play, play.player.displayed_streak(today), today)
+
     return {
         "puzzle": puzzle,
         "play": play,
@@ -86,4 +91,5 @@ def puzzle_view(puzzle: Puzzle, play: Play | None, today: date) -> dict:
         "pattern": letter_pattern(puzzle, revealed) if revealed and not finished else None,
         "highlight": clue_parts(puzzle) if finished or hints_used else None,
         "streak_risk": puzzle.kind == "daily" and puzzle.publish_date == today,
+        **details,
     }

@@ -24,11 +24,13 @@ def too_many_requests(error):
 @bp.get("/")
 def index():
     today = clock.today()
+    player = current_player()
     puzzle = daily_puzzle_for(today)
-    if puzzle is None:
-        return render_template("index.html", puzzle=None)
-    play = get_play(current_player(), puzzle)
-    return render_template("index.html", **puzzle_view(puzzle, play, today))
+
+    context = {"puzzle": None, "new_visitor": player is None}
+    if puzzle is not None:
+        context.update(puzzle_view(puzzle, get_play(player, puzzle), today))
+    return render_template("index.html", **context)
 
 
 @bp.get("/tadimlik")
@@ -54,6 +56,11 @@ def stats():
     player = current_player()
     data = player_stats(player, clock.today()) if player else None
     return render_template("stats.html", stats=data)
+
+
+@bp.get("/nasil-oynanir")
+def how_to_play():
+    return render_template("how_to_play.html")
 
 
 @bp.get("/health")

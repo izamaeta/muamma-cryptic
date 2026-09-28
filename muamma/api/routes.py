@@ -14,6 +14,7 @@ from muamma.puzzles import (
     is_playable,
     letter_pattern,
 )
+from muamma.share import finish_details
 from muamma.text import normalize_answer
 
 MAX_GUESS_LENGTH = 64
@@ -52,13 +53,16 @@ def _active_play(puzzle):
     return player, play
 
 
-def _solution(puzzle, player, today):
+def _solution(puzzle, play, player, today):
+    streak = player.displayed_streak(today)
     return {
         "answer": puzzle.answer,
         "explanation": puzzle.explanation,
-        "streak": player.displayed_streak(today),
+        "streak": streak,
         "highlight": clue_parts(puzzle),
+        **finish_details(puzzle, play, streak, today),
     }
+
 
 @bp.post("/puzzles/<int:puzzle_id>/guess")
 def guess(puzzle_id):
@@ -93,7 +97,7 @@ def guess(puzzle_id):
         letters=play.letters_revealed,
     )
     db.session.commit()
-    return jsonify(correct=True, **_solution(puzzle, player, today))
+    return jsonify(correct=True, **_solution(puzzle, play, player, today))
 
 
 @bp.post("/puzzles/<int:puzzle_id>/hint")
@@ -139,4 +143,4 @@ def reveal(puzzle_id):
     finish_play(play, "revealed", today)
     log_event(player, puzzle, "reveal_answer")
     db.session.commit()
-    return jsonify(**_solution(puzzle, player, today))
+    return jsonify(**_solution(puzzle, play, player, today))
