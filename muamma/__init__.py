@@ -1,6 +1,7 @@
 from flask import Flask
 
 from muamma.config import Config
+from muamma.extensions import db, migrate
 
 
 def create_app(config_class=Config):
@@ -8,8 +9,12 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    if not app.config.get("SECRET_KEY"):
-        raise RuntimeError("SECRET_KEY is not set")
+    for key in ("SECRET_KEY", "SQLALCHEMY_DATABASE_URI"):
+        if not app.config.get(key):
+            raise RuntimeError(f"{key} is not set")
+
+    db.init_app(app)
+    migrate.init_app(app, db)
 
     from muamma.main import bp as main_bp
 
