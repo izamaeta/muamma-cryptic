@@ -21,7 +21,9 @@ if (section) {
   async function post(action, body = {}) {
     const response = await fetch(`/api/puzzles/${id}/${action}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content,},
       body: JSON.stringify(body),
     });
     const data = await response.json().catch(() => ({}));
