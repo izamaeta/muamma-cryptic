@@ -8,6 +8,14 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('main.index') }}">Muamma</a>
+    <nav>
+      <a href="{{ url_for('main.practice_random') }}">Tadımlık</a>
+      <a href="{{ url_for('main.stats') }}">İstatistik</a>
+    </nav>
+    <p class="streak">Seri: <span class="streak-count">{{ streak }}</span></p>
+  </header>
   <main class="container">
     {% block content %}{% endblock %}
   </main>

@@ -1,0 +1,22 @@
+{% set finished = play and play.status != "in_progress" %}
+<section class="puzzle" data-puzzle-id="{{ puzzle.id }}" data-streak-risk="{{ 1 if streak_risk else 0 }}">
+  <p class="clue">{{ puzzle.clue }} <span class="enumeration">({{ puzzle.enumeration }})</span></p>
+  <p class="pattern" {% if not pattern %}hidden{% endif %}>{{ pattern or "" }}</p>
+  <ol class="hints">
+    {% for hint in used_hints %}<li>{{ hint }}</li>{% endfor %}
+  </ol>
+  <form class="guess-form" {% if finished %}hidden{% endif %}>
+    <input name="guess" autocomplete="off" autocapitalize="characters" maxlength="64" required>
+    <button type="submit">Kontrol et</button>
+  </form>
+  <div class="helpers" {% if finished %}hidden{% endif %}>
+    <button type="button" data-action="hint">İpucu</button>
+    <button type="button" data-action="letter">Harf aç</button>
+    <button type="button" data-action="reveal">Cevabı göster</button>
+  </div>
+  <p class="feedback" aria-live="polite">{% if play and play.status == "solved" %}Doğru!{% endif %}</p>
+  <div class="solution" {% if not finished %}hidden{% endif %}>
+    <p class="answer">{% if finished %}{{ puzzle.answer }}{% endif %}</p>
+    <p class="explanation">{% if finished %}{{ puzzle.explanation }}{% endif %}</p>
+  </div>
+</section>

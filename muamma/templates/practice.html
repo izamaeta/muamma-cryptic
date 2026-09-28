@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Tadımlık – Muamma{% endblock %}
+
+{% block content %}
+  <h1>Tadımlık</h1>
+  {% include "_puzzle.html" %}
+  <p><a href="{{ url_for('main.practice_random') }}">Başka bir tadımlık</a></p>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
+{% endblock %}
