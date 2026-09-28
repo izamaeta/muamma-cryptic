@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Nasıl oynanır – Muamma{% endblock %}
+{% block description %}Cryptic bulmaca nasıl çözülür? Tanım, kelime oyunu ve Türkçe örneklerle adım adım anlatım.{% endblock %}
+
+{% block content %}
+  <article class="howto">
+    <h1>Nasıl oynanır</h1>
+    <p>Muamma'da her gün tek bir ipucu var. Cevap tek bir kelime ya da kısa bir ifade; parantezdeki sayı harf sayısını gösterir. İki kelimeli cevaplarda, (4,3) gibi, her kelimenin harf sayısı ayrı yazılır.</p>
+
+    <h2>Cryptic ipucu nedir?</h2>
+    <p>Sıradan bulmacada ipucu sadece bir tanımdır. Cryptic ipucunda iki parça vardır: bir <strong>tanım</strong> ve aynı cevaba götüren bir <strong>kelime oyunu</strong>. Tanım neredeyse her zaman ipucunun başında ya da sonundadır. İşin sırrı, cümleyi göründüğü gibi okumamak.</p>
+    <div class="example">
+      <p class="example-clue">Karıncanın içinde saklanan <mark class="definition">bal yapıcı</mark> (3)</p>
+      <p>Tanım "bal yapıcı". Kelime oyunu "karıncanın içinde saklanan": k<strong>ARI</strong>nca kelimesinin içinde gizli. Cevap: <strong>ARI</strong>.</p>
+    </div>
+
+    <h2>Kelime oyunu türleri</h2>
+    <p>Kelime oyununu genelde bir <strong>gösterge</strong> kelime ele verir. Aşağıda en sık kullanılan türler ve göstergeleri var.</p>
+
+    <h3>Gizli kelime</h3>
+    <p>Cevap, ipucundaki bir ya da birkaç kelimenin içinde saklıdır. Göstergeler: <em>içinde, saklı, gizli, barındıran</em>.</p>
+
+    <h3>Anagram</h3>
+    <p>Bir kelimenin harfleri karıştırılarak cevap elde edilir. Göstergeler: <em>bozuk, karışık, dağınık, sarhoş, yeniden</em>.</p>
+    <div class="example">
+      <p class="example-clue">Bozuk kalem, <mark class="definition">söz</mark> demek (5)</p>
+      <p>KALEM'in harfleri karışınca <strong>KELAM</strong>.</p>
+    </div>
+
+    <h3>Birleştirme</h3>
+    <p>Küçük parçalar yan yana gelerek cevabı oluşturur.</p>
+    <div class="example">
+      <p class="example-clue">Uydu ile beyaz yan yana, <mark class="definition">yürümeye yarar</mark> (4)</p>
+      <p>Uydu = AY, beyaz = AK. AY + AK = <strong>AYAK</strong>.</p>
+    </div>
+
+    <h3>İç içe</h3>
+    <p>Bir parça diğerinin içine yerleşir. Göstergeler: <em>içine koy, saran, kucaklayan</em>.</p>
+    <div class="example">
+      <p class="example-clue">Beyazı salın içine koy, <mark class="definition">yüzde uzar</mark> (5)</p>
+      <p>Beyaz = AK, SAL'ın içine girince S(AK)AL = <strong>SAKAL</strong>.</p>
+    </div>
+
+    <h3>Ters çevirme</h3>
+    <p>Bir kelime tersten okunur. Göstergeler: <em>geri, tersten, dönen</em>.</p>
+    <div class="example">
+      <p class="example-clue">Ayak geri dönünce <mark class="definition">taş</mark> olur (4)</p>
+      <p>AYAK tersten okununca <strong>KAYA</strong>.</p>
+    </div>
+
+    <h3>Harf atma</h3>
+    <p>Bir kelimeden harf düşer. Göstergeler: <em>başsız, sonsuz, kaybeden, eksik</em>.</p>
+    <div class="example">
+      <p class="example-clue">Başını kaybeden kalem <mark class="definition">dünya</mark> olur (4)</p>
+      <p>KALEM'in ilk harfi düşünce <strong>ALEM</strong>.</p>
+    </div>
+
+    <h3>Çift tanım</h3>
+    <p>İpucunda aynı cevabın iki farklı anlamı yan yana durur.</p>
+    <div class="example">
+      <p class="example-clue">Hem surat hem sayı (3)</p>
+      <p>İkisi de <strong>YÜZ</strong>.</p>
+    </div>
+
+    <h3>Kuralı esnetenler</h3>
+    <p>Bazı ipuçlarında ayrı bir tanım yoktur; bütün ipucu tek bir şakadır.</p>
+    <div class="example">
+      <p class="example-clue">HIİJKLMNO (2)</p>
+      <p>Harfler H'den O'ya: H₂O, yani <strong>SU</strong>.</p>
+    </div>
+
+    <h2>Yardım almak</h2>
+    <ul>
+      <li><strong>İpucu</strong>: İlk ipucu tanımı gösterir, sonrakiler kelime oyununa işaret eder.</li>
+      <li><strong>Harf aç</strong>: Soldan başlayarak bir harf açar. Son harf açılmaz.</li>
+      <li><strong>Cevabı göster</strong>: Bulmacayı bitirir. Günün bulmacasında serini sıfırlar.</li>
+    </ul>
+
+    <h2>Seri</h2>
+    <p>Günün bulmacasını o gün çözersen serin bir artar. İpucu almak ve harf açmak seriyi bozmaz; cevaba bakmak ya da bir günü kaçırmak bozar. Tadımlıklar seriye sayılmaz, istediğin kadar çözebilirsin.</p>
+
+    <p class="cta"><a href="{{ url_for('main.index') }}">Hadi, günün bulmacasına</a></p>
+  </article>
+{% endblock %}

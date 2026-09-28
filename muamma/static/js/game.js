@@ -12,6 +12,8 @@ if (section) {
   const clueText = section.querySelector(".clue-text");
   const tiles = [...section.querySelectorAll(".tile")];
   const streak = document.querySelector(".streak-count");
+  const shareButton = section.querySelector(".share-button");
+  const countdown = section.querySelector(".countdown");
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
   const messages = {
@@ -48,6 +50,31 @@ if (section) {
     clueText.replaceChildren(parts[0], mark, parts[2]);
   }
 
+  function startCountdown(seconds) {
+    if (!seconds) return;
+    const end = Date.now() + seconds * 1000;
+    const label = countdown.querySelector(".countdown-time");
+    countdown.hidden = false;
+
+    const tick = () => {
+      const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+      if (left === 0) {
+        countdown.textContent = "Yeni bulmaca hazır, sayfayı yenile.";
+        return;
+      }
+      const pad = (n) => String(n).padStart(2, "0");
+      label.textContent = `${pad(Math.floor(left / 3600))}:${pad(Math.floor((left % 3600) / 60))}:${pad(left % 60)}`;
+      setTimeout(tick, 1000);
+    };
+    tick();
+  }
+
+  function enableShare(text) {
+    if (!text) return;
+    shareButton.dataset.share = text;
+    shareButton.hidden = false;
+  }
+
   async function post(action, body = {}) {
     const response = await fetch(`/api/puzzles/${id}/${action}`, {
       method: "POST",
@@ -76,6 +103,8 @@ if (section) {
     solution.querySelector(".explanation").textContent = data.explanation;
     solution.hidden = false;
     streak.textContent = data.streak;
+    enableShare(data.share);
+    startCountdown(data.next_in);
   }
 
   input.addEventListener("input", renderTiles);
@@ -123,4 +152,16 @@ if (section) {
       if (data) showSolution(data, "Cevap:");
     }
   });
+
+  shareButton.addEventListener("click", async () => {
+    const text = shareButton.dataset.share;
+    if (navigator.share) {
+      await navigator.share({ text }).catch(() => {});
+      return;
+    }
+    await navigator.clipboard.writeText(text);
+    feedback.textContent = "Sonuç panoya kopyalandı.";
+  });
+
+  startCountdown(Number(countdown.dataset.seconds));
 }

@@ -2,6 +2,9 @@
 
 {% block content %}
   <h1>Günün bulmacası</h1>
+  {% if new_visitor %}
+    <p class="intro">Cryptic bulmacada ilk kez mi? <a href="{{ url_for('main.how_to_play') }}">Nasıl oynandığına</a> bir göz at.</p>
+  {% endif %}
   {% if puzzle %}
     {% include "_puzzle.html" %}
   {% else %}

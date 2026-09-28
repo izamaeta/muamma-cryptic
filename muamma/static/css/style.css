@@ -248,6 +248,55 @@ button.primary {
   color: var(--muted);
 }
 
+.share-button {
+  margin-top: 1rem;
+}
+
+.countdown {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.intro {
+  margin-top: -0.5rem;
+  color: var(--muted);
+}
+
+/* How to play */
+
+.howto h2 {
+  margin-top: 2rem;
+  font-family: var(--serif);
+}
+
+.howto h3 {
+  margin: 1.5rem 0 0.25rem;
+}
+
+.example {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+}
+
+.example p {
+  margin: 0.25rem 0;
+}
+
+.example-clue {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+}
+
+.cta {
+  margin-top: 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
 /* Stats */
 
 .stats {

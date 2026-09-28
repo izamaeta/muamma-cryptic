@@ -43,5 +43,9 @@
   <div class="solution" {% if not finished %}hidden{% endif %}>
     <p class="answer">{% if finished %}{{ puzzle.answer }}{% endif %}</p>
     <p class="explanation">{% if finished %}{{ puzzle.explanation }}{% endif %}</p>
+    <button type="button" class="primary share-button" data-share="{{ share or '' }}" {% if not share %}hidden{% endif %}>Sonucu paylaş</button>
+    <p class="countdown" data-seconds="{{ next_in or '' }}" {% if not next_in %}hidden{% endif %}>
+      Yeni bulmacaya <span class="countdown-time"></span>
+    </p>
   </div>
 </section>
