@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+  <h1>Giriş</h1>
+  <form method="post" class="admin-form">
+    {{ form.hidden_tag() }}
+    {{ form.email.label }}
+    {{ form.email(autocomplete="username") }}
+    {{ form.password.label }}
+    {{ form.password(autocomplete="current-password") }}
+    <button type="submit">Giriş yap</button>
+  </form>
+{% endblock %}

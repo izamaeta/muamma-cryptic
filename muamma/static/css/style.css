@@ -85,3 +85,20 @@ body {
   grid-template-columns: 1fr auto;
   gap: 0.5rem 1rem;
 }
+
+.admin-form {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 360px;
+}
+
+.admin-form input {
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.flash {
+  padding: 0.5rem 0.75rem;
+  background: #fff3cd;
+  border-radius: 4px;
+}
