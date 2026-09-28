@@ -95,3 +95,24 @@ code.
 finished, so each puzzle has a stable URL. Player stats are computed from
 `plays` on request; the numbers are small per player and do not need to be
 stored.
+
+
+## Admin authentication
+
+Admin accounts can only be created with the `create-admin` command on the
+server; there is no sign-up page. Passwords are hashed with argon2 and
+must be at least 12 characters.
+
+Failed logins return the same message for unknown emails and wrong
+passwords, and unknown emails are checked against a dummy hash so both
+cases take similar time. After login the user is always sent to the
+dashboard; the `next` parameter is ignored to avoid open redirects.
+
+The session cookie is long-lived for players, so admin logins carry their
+own timestamp and expire after 12 hours. Admin pages send
+`X-Robots-Tag: noindex`. Login rate limiting comes with the security step.
+
+## CSRF
+
+CSRF protection is enabled for every POST, including the game API. Pages
+expose the token in a meta tag and the client sends it as `X-CSRFToken`.
