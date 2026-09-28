@@ -1,5 +1,22 @@
 # Design decisions
 
+## Flask with server-side rendering
+
+Pages are rendered on the server with Jinja templates instead of a
+JavaScript single-page app, so search engines can read puzzle and archive
+content directly. Flask fits this well and has mature extensions for
+sessions, forms and CSRF protection, which the admin panel will need.
+
+## Configuration through environment variables
+
+All settings and secrets come from environment variables. `.env` is used
+locally and never committed; `.env.example` lists the required keys.
+
+The local `DATABASE_URL` uses `127.0.0.1` instead of `localhost` and sets
+`connect_timeout`. On Windows `localhost` may resolve to IPv6 first and
+hang against Docker's port forwarding; the timeout turns any hang into a
+clear error.
+
 ## Docker Compose for local and production
 
 The app and PostgreSQL run in containers so the local setup matches the
@@ -9,7 +26,6 @@ localhost only.
 
 The host port for PostgreSQL is 15432 to avoid clashing with a local
 PostgreSQL install on the default port.
-
 
 ## Data model
 
@@ -36,7 +52,6 @@ Answers are compared after Turkish-aware uppercasing (i/İ, ı/I),
 flattening circumflex vowels and removing everything except letters.
 Python's `str.upper()` is not locale-aware and maps `i` to `I`.
 
-
 ## Daily puzzle and guess checking
 
 "Today" always comes from `clock.today()` in the app timezone, so tests
@@ -49,9 +64,6 @@ API, the same as a missing puzzle, so their existence is not revealed.
 Client code lives in static files rather than inline scripts, to allow a
 strict Content-Security-Policy later. Server text is inserted with
 `textContent`, never as HTML.
-
-
-
 
 ## Player identity
 
@@ -70,8 +82,6 @@ the puzzle.
 Two simultaneous first requests from the same player could both try to
 create a play row; the unique constraint rejects the second one. This is
 rare enough to leave for now.
-
-
 
 ## Assists
 
@@ -96,7 +106,6 @@ finished, so each puzzle has a stable URL. Player stats are computed from
 `plays` on request; the numbers are small per player and do not need to be
 stored.
 
-
 ## Admin authentication
 
 Admin accounts can only be created with the `create-admin` command on the
@@ -110,13 +119,12 @@ dashboard; the `next` parameter is ignored to avoid open redirects.
 
 The session cookie is long-lived for players, so admin logins carry their
 own timestamp and expire after 12 hours. Admin pages send
-`X-Robots-Tag: noindex`. Login rate limiting comes with the security step.
+`X-Robots-Tag: noindex`.
 
 ## CSRF
 
 CSRF protection is enabled for every POST, including the game API. Pages
 expose the token in a meta tag and the client sends it as `X-CSRFToken`.
-
 
 ## Puzzle management
 
@@ -133,3 +141,26 @@ puzzles cannot be deleted.
 The stock indicator counts consecutive ready days from today rather than
 the total number of scheduled puzzles, because a single gap means a day
 without a puzzle.
+
+## Rate limiting
+
+Limits are stored in Redis so all gunicorn workers share counters. If
+Redis is unavailable, requests are allowed rather than failing; a short
+window without limits is better than an outage.
+
+Each game API endpoint allows 30 requests per minute and 500 per hour,
+keyed by player id when present and by IP otherwise. Mobile carriers put
+many users behind one IP, so IP-only limits would punish unrelated
+players. Dropping the cookie does not help an attacker: every new identity
+starts with a request counted against the IP. Admin login attempts are
+limited to 5 per minute and 20 per hour per IP.
+
+## Security headers and proxies
+
+Every response carries a strict Content-Security-Policy (own scripts and
+styles only), nosniff, frame denial and a referrer policy. HSTS is only
+enabled in production behind HTTPS. Request bodies are capped at 64 KB.
+
+`X-Forwarded-*` headers are trusted only when `TRUSTED_PROXY_HOPS` is set,
+because without a real proxy in front a client could spoof its IP and
+bypass rate limits.
