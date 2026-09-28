@@ -10,3 +10,29 @@ body {
   margin: 0 auto;
   padding: 2rem 1rem;
 }
+
+.clue {
+  font-size: 1.4rem;
+  line-height: 1.5;
+}
+
+.enumeration {
+  color: #777;
+}
+
+.guess-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.guess-form input {
+  flex: 1;
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+}
+
+.guess-form button {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+}

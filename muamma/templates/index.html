@@ -2,5 +2,24 @@
 
 {% block content %}
   <h1>Muamma</h1>
-  <p>Günün bulmacası çok yakında.</p>
+  {% if puzzle %}
+    <section class="puzzle" data-puzzle-id="{{ puzzle.id }}">
+      <p class="clue">{{ puzzle.clue }} <span class="enumeration">({{ puzzle.enumeration }})</span></p>
+      <form class="guess-form">
+        <input name="guess" autocomplete="off" autocapitalize="characters" maxlength="64" required>
+        <button type="submit">Kontrol et</button>
+      </form>
+      <p class="feedback" aria-live="polite"></p>
+      <div class="solution" hidden>
+        <p class="answer"></p>
+        <p class="explanation"></p>
+      </div>
+    </section>
+  {% else %}
+    <p>Bugünün bulmacası hazırlanıyor.</p>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
 {% endblock %}

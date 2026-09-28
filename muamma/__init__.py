@@ -15,11 +15,14 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app, db)
-    
-    from muamma import models  # noqa: F401
 
+    from muamma import models  # noqa: F401
+    from muamma.api import bp as api_bp
+    from muamma.cli import seed_demo
     from muamma.main import bp as main_bp
 
     app.register_blueprint(main_bp)
+    app.register_blueprint(api_bp, url_prefix="/api")
+    app.cli.add_command(seed_demo)
 
     return app
