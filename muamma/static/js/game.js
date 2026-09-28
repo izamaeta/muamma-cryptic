@@ -9,6 +9,8 @@ if (section) {
   const solution = section.querySelector(".solution");
   const hints = section.querySelector(".hints");
   const pattern = section.querySelector(".pattern");
+  const clueText = section.querySelector(".clue-text");
+  const tiles = [...section.querySelectorAll(".tile")];
   const streak = document.querySelector(".streak-count");
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
@@ -19,6 +21,32 @@ if (section) {
     no_more_letters: "Daha fazla harf açılamaz.",
     rate_limited: "Çok hızlı gidiyorsun, biraz bekle.",
   };
+
+  const lettersOf = (text) =>
+    [...text.toLocaleUpperCase("tr")].filter((ch) => /\p{L}/u.test(ch));
+
+  function renderTiles() {
+    const typed = lettersOf(input.value);
+    tiles.forEach((tile, i) => {
+      tile.textContent = typed[i] ?? tile.dataset.given;
+      tile.classList.toggle("given", !typed[i] && Boolean(tile.dataset.given));
+    });
+  }
+
+  function setGiven(letters) {
+    tiles.forEach((tile, i) => {
+      tile.dataset.given = letters[i] && letters[i] !== "_" ? letters[i] : "";
+    });
+    renderTiles();
+  }
+
+  function highlight(parts) {
+    if (!parts) return;
+    const mark = document.createElement("mark");
+    mark.className = "definition";
+    mark.textContent = parts[1];
+    clueText.replaceChildren(parts[0], mark, parts[2]);
+  }
 
   async function post(action, body = {}) {
     const response = await fetch(`/api/puzzles/${id}/${action}`, {
@@ -40,12 +68,18 @@ if (section) {
   function showSolution(data, message) {
     form.hidden = true;
     helpers.hidden = true;
+    input.value = "";
+    setGiven(lettersOf(data.answer));
+    highlight(data.highlight);
     feedback.textContent = message;
     solution.querySelector(".answer").textContent = data.answer;
     solution.querySelector(".explanation").textContent = data.explanation;
     solution.hidden = false;
     streak.textContent = data.streak;
   }
+
+  input.addEventListener("input", renderTiles);
+  section.querySelector(".tiles").addEventListener("click", () => input.focus());
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -73,11 +107,12 @@ if (section) {
       const item = document.createElement("li");
       item.textContent = data.text;
       hints.append(item);
+      highlight(data.highlight);
     } else if (action === "letter") {
       const data = await post("letter");
       if (!data) return;
       pattern.textContent = data.pattern;
-      pattern.hidden = false;
+      setGiven([...data.pattern.replaceAll(" ", "")]);
     } else if (action === "reveal") {
       const warning =
         section.dataset.streakRisk === "1"

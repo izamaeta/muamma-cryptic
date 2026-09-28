@@ -1,20 +1,45 @@
 {% set finished = play and play.status != "in_progress" %}
 <section class="puzzle" data-puzzle-id="{{ puzzle.id }}" data-streak-risk="{{ 1 if streak_risk else 0 }}">
-  <p class="clue">{{ puzzle.clue }} <span class="enumeration">({{ puzzle.enumeration }})</span></p>
-  <p class="pattern" {% if not pattern %}hidden{% endif %}>{{ pattern or "" }}</p>
+  <p class="clue">
+    <span class="clue-text">
+      {%- if highlight -%}
+        {{ highlight[0] }}<mark class="definition">{{ highlight[1] }}</mark>{{ highlight[2] }}
+      {%- else -%}
+        {{ puzzle.clue }}
+      {%- endif -%}
+    </span>
+    <span class="enumeration">({{ puzzle.enumeration }})</span>
+  </p>
+
+  <div class="tiles" aria-hidden="true">
+    {% for group in tiles %}
+      <div class="tile-group">
+        {%- for letter in group -%}
+          <span class="tile{% if letter %} given{% endif %}" data-given="{{ letter }}">{{ letter }}</span>
+        {%- endfor -%}
+      </div>
+    {% endfor %}
+  </div>
+  <p class="pattern visually-hidden">{{ pattern or "" }}</p>
+
   <ol class="hints">
     {% for hint in used_hints %}<li>{{ hint }}</li>{% endfor %}
   </ol>
+
   <form class="guess-form" {% if finished %}hidden{% endif %}>
-    <input name="guess" autocomplete="off" autocapitalize="characters" maxlength="64" required>
-    <button type="submit">Kontrol et</button>
+    <label class="visually-hidden" for="guess-{{ puzzle.id }}">Cevabın</label>
+    <input id="guess-{{ puzzle.id }}" name="guess" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64" required>
+    <button type="submit" class="primary">Kontrol et</button>
   </form>
+
   <div class="helpers" {% if finished %}hidden{% endif %}>
     <button type="button" data-action="hint">İpucu</button>
     <button type="button" data-action="letter">Harf aç</button>
     <button type="button" data-action="reveal">Cevabı göster</button>
   </div>
+
   <p class="feedback" aria-live="polite">{% if play and play.status == "solved" %}Doğru!{% endif %}</p>
+
   <div class="solution" {% if not finished %}hidden{% endif %}>
     <p class="answer">{% if finished %}{{ puzzle.answer }}{% endif %}</p>
     <p class="explanation">{% if finished %}{{ puzzle.explanation }}{% endif %}</p>
