@@ -1,0 +1,42 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+  {% macro field(f, locked=False) %}
+    <div class="field">
+      {{ f.label }}
+      {{ f(disabled=locked) }}
+      {% for error in f.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+  {% endmacro %}
+
+  <h1>{{ "Bulmacayı düzenle" if puzzle else "Yeni bulmaca" }}</h1>
+  {% if locked %}
+    <p class="flash">Bu bulmaca yayınlandı ya da oynandı: tür, durum, cevap, harf sayısı ve tarih değiştirilemez.</p>
+  {% endif %}
+
+  <form method="post" class="admin-form wide">
+    {{ form.hidden_tag() }}
+    {{ field(form.kind, locked) }}
+    {{ field(form.status, locked) }}
+    {{ field(form.clue) }}
+    {{ field(form.definition) }}
+    {{ field(form.answer, locked) }}
+    {{ field(form.enumeration, locked) }}
+    {{ field(form.hints) }}
+    {{ field(form.explanation) }}
+    {{ field(form.technique) }}
+    {{ field(form.difficulty) }}
+    {{ field(form.publish_date, locked) }}
+    {% if not locked %}
+      <label class="checkbox">{{ form.next_free_day() }} {{ form.next_free_day.label.text }}</label>
+    {% endif %}
+    <button type="submit">Kaydet</button>
+  </form>
+
+  {% if puzzle and not locked %}
+    <form method="post" action="{{ url_for('admin.puzzle_delete', puzzle_id=puzzle.id) }}" class="delete-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Sil</button>
+    </form>
+  {% endif %}
+{% endblock %}

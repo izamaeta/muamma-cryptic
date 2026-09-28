@@ -2,5 +2,25 @@
 
 {% block content %}
   <h1>Panel</h1>
-  <p>Hoş geldin, {{ current_user.email }}.</p>
+  <p class="stock {% if warning %}stock-low{% endif %}">
+    Önünde <strong>{{ stock }} gün</strong> hazır günlük bulmaca var.
+    {% if warning %}Stok azalıyor, yeni bulmaca eklemelisin.{% endif %}
+  </p>
+
+  <h2>Önümüzdeki 14 gün</h2>
+  <table class="calendar">
+    {% for day, puzzle in calendar %}
+      <tr>
+        <td>{{ day.strftime("%d.%m.%Y") }}</td>
+        <td>
+          {% if puzzle %}
+            <a href="{{ url_for('admin.puzzle_edit', puzzle_id=puzzle.id) }}">{{ puzzle.clue }}</a>
+            {% if puzzle.status == "draft" %}<span class="badge">taslak</span>{% endif %}
+          {% else %}
+            <span class="empty">boş</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
 {% endblock %}

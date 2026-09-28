@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+  <h1>Bulmacalar</h1>
+  <p class="tabs">
+    {% for key, label in [("upcoming", "Yaklaşan"), ("past", "Yayınlanmış"), ("practice", "Tadımlık"), ("drafts", "Taslaklar")] %}
+      <a href="{{ url_for('admin.puzzles', view=key) }}" {% if key == view %}class="active"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </p>
+  <table class="puzzle-list">
+    {% for puzzle in puzzles %}
+      <tr>
+        <td>{{ puzzle.publish_date.strftime("%d.%m.%Y") if puzzle.publish_date else "–" }}</td>
+        <td><a href="{{ url_for('admin.puzzle_edit', puzzle_id=puzzle.id) }}">{{ puzzle.clue }}</a></td>
+        <td>{{ puzzle.answer }}</td>
+        <td>{{ puzzle.technique }}</td>
+      </tr>
+    {% else %}
+      <tr><td>Bu listede bulmaca yok.</td></tr>
+    {% endfor %}
+  </table>
+{% endblock %}

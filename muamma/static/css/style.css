@@ -102,3 +102,68 @@ body {
   background: #fff3cd;
   border-radius: 4px;
 }
+
+.admin-form.wide {
+  max-width: 100%;
+}
+
+.admin-form textarea {
+  min-height: 4rem;
+  padding: 0.5rem;
+  font: inherit;
+}
+
+.admin-form select {
+  padding: 0.4rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.error,
+.stock-low,
+.empty {
+  color: #b00020;
+}
+
+.error {
+  margin: 0;
+}
+
+.calendar,
+.puzzle-list {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.calendar td,
+.puzzle-list td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid #e5e0d8;
+}
+
+.badge {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.tabs .active {
+  font-weight: 700;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.delete-form {
+  margin-top: 2rem;
+}
