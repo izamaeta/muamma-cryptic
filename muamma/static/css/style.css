@@ -1,23 +1,181 @@
+:root {
+  --paper: #f7f3ea;
+  --surface: #fffdf8;
+  --ink: #1f1b16;
+  --muted: #6b6258;
+  --line: #e2d9c8;
+  --accent: #b3261e;
+  --accent-ink: #ffffff;
+  --mark: #f3dfa2;
+  --warn: #fff1c7;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #16140f;
+    --surface: #1f1c16;
+    --ink: #efe8da;
+    --muted: #a59d90;
+    --line: #37322a;
+    --accent: #ff8a7a;
+    --accent-ink: #1f1b16;
+    --mark: #5c4a1a;
+    --warn: #3d3419;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #faf8f5;
-  color: #222;
+  font-family: var(--sans);
+  line-height: 1.5;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+a {
+  color: var(--accent);
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0.5rem 0 1rem;
 }
 
 .container {
   max-width: 640px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1rem 1rem 3rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Header */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.site-header nav {
+  display: flex;
+  flex: 1;
+  gap: 1rem;
+}
+
+.site-header nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.site-header nav a:hover {
+  color: var(--ink);
+}
+
+.streak {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.streak-count {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Puzzle */
+
+.puzzle {
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
 }
 
 .clue {
-  font-size: 1.4rem;
-  line-height: 1.5;
+  margin: 0 0 1.25rem;
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  line-height: 1.35;
 }
 
 .enumeration {
-  color: #777;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.definition {
+  padding: 0 0.1em;
+  background: var(--mark);
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  cursor: text;
+}
+
+.tile-group {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: var(--paper);
+}
+
+.tile.given {
+  color: var(--muted);
+  border-color: var(--muted);
+}
+
+.hints {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  color: var(--muted);
 }
 
 .guess-form {
@@ -27,58 +185,70 @@ body {
 
 .guess-form input {
   flex: 1;
-  padding: 0.6rem;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
   font-size: 1.1rem;
   text-transform: uppercase;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
 }
 
-.guess-form button {
-  padding: 0.6rem 1rem;
-  font-size: 1rem;
+button {
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-.streak {
-  color: #555;
+button:hover {
+  border-color: var(--ink);
 }
 
-.site-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 1rem 1rem 0;
-}
-
-.brand {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: inherit;
-  text-decoration: none;
-}
-
-.site-header nav {
-  display: flex;
-  flex: 1;
-  gap: 0.75rem;
-}
-
-.pattern {
-  font-family: ui-monospace, monospace;
-  font-size: 1.4rem;
-  letter-spacing: 0.3em;
-}
-
-.hints {
-  padding-left: 1.2rem;
-  color: #444;
+button.primary {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
 }
 
 .helpers {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
+
+.feedback {
+  min-height: 1.5em;
+  margin: 1rem 0 0;
+  font-weight: 600;
+}
+
+.solution {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.answer {
+  margin: 0 0 0.5rem;
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.explanation {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Stats */
 
 .stats {
   display: grid;
@@ -86,35 +256,36 @@ body {
   gap: 0.5rem 1rem;
 }
 
+.stats dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+/* Admin */
+
 .admin-form {
   display: grid;
   gap: 0.5rem;
   max-width: 360px;
 }
 
-.admin-form input {
-  padding: 0.5rem;
-  font-size: 1rem;
-}
-
-.flash {
-  padding: 0.5rem 0.75rem;
-  background: #fff3cd;
-  border-radius: 4px;
-}
-
 .admin-form.wide {
   max-width: 100%;
 }
 
-.admin-form textarea {
-  min-height: 4rem;
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
   padding: 0.5rem;
   font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
 }
 
-.admin-form select {
-  padding: 0.4rem;
+.admin-form textarea {
+  min-height: 4rem;
 }
 
 .field {
@@ -122,10 +293,16 @@ body {
   gap: 0.25rem;
 }
 
+.flash {
+  padding: 0.5rem 0.75rem;
+  background: var(--warn);
+  border-radius: 4px;
+}
+
 .error,
 .stock-low,
 .empty {
-  color: #b00020;
+  color: var(--accent);
 }
 
 .error {
@@ -141,12 +318,12 @@ body {
 .calendar td,
 .puzzle-list td {
   padding: 0.35rem 0.5rem;
-  border-bottom: 1px solid #e5e0d8;
+  border-bottom: 1px solid var(--line);
 }
 
 .badge {
   font-size: 0.8rem;
-  color: #777;
+  color: var(--muted);
 }
 
 .tabs {
@@ -166,4 +343,23 @@ body {
 
 .delete-form {
   margin-top: 2rem;
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    flex-wrap: wrap;
+  }
+
+  .puzzle {
+    padding: 1rem;
+  }
+
+  .clue {
+    font-size: 1.35rem;
+  }
+
+  .tile {
+    width: 2.1rem;
+    height: 2.3rem;
+  }
 }
