@@ -35,3 +35,17 @@ code. Puzzles that have plays cannot be deleted.
 Answers are compared after Turkish-aware uppercasing (i/İ, ı/I),
 flattening circumflex vowels and removing everything except letters.
 Python's `str.upper()` is not locale-aware and maps `i` to `I`.
+
+
+## Daily puzzle and guess checking
+
+"Today" always comes from `clock.today()` in the app timezone, so tests
+can pin the date. The page never contains the answer or explanation;
+they are returned by the guess endpoint only after a correct guess.
+
+Puzzles that are drafts or scheduled for a later date return 404 from the
+API, the same as a missing puzzle, so their existence is not revealed.
+
+Client code lives in static files rather than inline scripts, to allow a
+strict Content-Security-Policy later. Server text is inserted with
+`textContent`, never as HTML.
