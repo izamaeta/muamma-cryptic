@@ -9,6 +9,7 @@ from muamma.players import current_player, player_or_ip
 from muamma.puzzles import (
     answer_length,
     check_answer,
+    clue_parts,
     hint_texts,
     is_playable,
     letter_pattern,
@@ -56,8 +57,8 @@ def _solution(puzzle, player, today):
         "answer": puzzle.answer,
         "explanation": puzzle.explanation,
         "streak": player.displayed_streak(today),
+        "highlight": clue_parts(puzzle),
     }
-
 
 @bp.post("/puzzles/<int:puzzle_id>/guess")
 def guess(puzzle_id):
@@ -108,7 +109,11 @@ def hint(puzzle_id):
     play.hints_used += 1
     log_event(player, puzzle, "hint", level=play.hints_used)
     db.session.commit()
-    return jsonify(text=text, remaining=len(hints) - play.hints_used)
+
+    payload = {"text": text, "remaining": len(hints) - play.hints_used}
+    if puzzle.definition and play.hints_used == 1:
+        payload["highlight"] = clue_parts(puzzle)
+    return jsonify(payload)
 
 
 @bp.post("/puzzles/<int:puzzle_id>/letter")

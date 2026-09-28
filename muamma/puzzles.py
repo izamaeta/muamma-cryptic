@@ -4,8 +4,7 @@ from sqlalchemy import select
 
 from muamma.extensions import db
 from muamma.models import Play, Puzzle
-from muamma.text import normalize_answer
-
+from muamma.text import normalize_answer, turkish_upper
 
 def daily_puzzle_for(day: date) -> Puzzle | None:
     return db.session.scalar(
@@ -43,27 +42,48 @@ def hint_texts(puzzle: Puzzle) -> list[str]:
     first = [f"Tanım: {puzzle.definition}"] if puzzle.definition else []
     return [*first, *(puzzle.hints or [])]
 
-
-def letter_pattern(puzzle: Puzzle, revealed: int) -> str:
-    """Answer with the first `revealed` letters shown, grouped by word."""
+def tile_groups(puzzle: Puzzle, revealed: int) -> list[list[str]]:
+    """Answer letters grouped by word; unrevealed positions are empty."""
     letters = normalize_answer(puzzle.answer)
-    shown = [ch if i < revealed else "_" for i, ch in enumerate(letters)]
-
     groups, start = [], 0
     for size in enumeration_parts(puzzle.enumeration):
-        groups.append("".join(shown[start : start + size]))
+        groups.append([letters[i] if i < revealed else "" for i in range(start, start + size)])
         start += size
-    return " ".join(groups)
+    return groups
+
+
+def letter_pattern(puzzle: Puzzle, revealed: int) -> str:
+    groups = tile_groups(puzzle, revealed)
+    return " ".join("".join(ch or "_" for ch in group) for group in groups)
+
+
+def clue_parts(puzzle: Puzzle) -> tuple[str, str, str] | None:
+    """Split the clue around its definition, matching Turkish case rules."""
+    if not puzzle.definition:
+        return None
+    upper_clue = turkish_upper(puzzle.clue)
+    if len(upper_clue) != len(puzzle.clue):
+        return None
+    start = upper_clue.find(turkish_upper(puzzle.definition))
+    if start < 0:
+        return None
+    end = start + len(puzzle.definition)
+    return puzzle.clue[:start], puzzle.clue[start:end], puzzle.clue[end:]
 
 
 def puzzle_view(puzzle: Puzzle, play: Play | None, today: date) -> dict:
     """Template context for a puzzle, restoring the player's progress."""
+    finished = play is not None and play.status != "in_progress"
     hints_used = play.hints_used if play else 0
-    letters = play.letters_revealed if play else 0
+    revealed = play.letters_revealed if play else 0
+    shown = answer_length(puzzle.enumeration) if finished else revealed
+
     return {
         "puzzle": puzzle,
         "play": play,
         "used_hints": hint_texts(puzzle)[:hints_used],
-        "pattern": letter_pattern(puzzle, letters) if letters else None,
+        "tiles": tile_groups(puzzle, shown),
+        "pattern": letter_pattern(puzzle, revealed) if revealed and not finished else None,
+        "highlight": clue_parts(puzzle) if finished or hints_used else None,
         "streak_risk": puzzle.kind == "daily" and puzzle.publish_date == today,
     }
