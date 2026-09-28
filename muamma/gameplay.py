@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from muamma.extensions import db
 from muamma.models import Event, Play, Player, Puzzle, utcnow
@@ -65,3 +65,13 @@ def finish_play(play: Play, status: str, today: date) -> None:
         record_daily_solve(play.player, today)
     elif status == "revealed" and on_its_day:
         play.player.current_streak = 0
+
+def random_practice_id(player: Player | None) -> int | None:
+    """Random ready practice puzzle the player has not finished."""
+    query = select(Puzzle.id).where(Puzzle.kind == "practice", Puzzle.status == "ready")
+    if player is not None:
+        finished = select(Play.puzzle_id).where(
+            Play.player_id == player.id, Play.status != "in_progress"
+        )
+        query = query.where(Puzzle.id.not_in(finished))
+    return db.session.scalar(query.order_by(func.random()).limit(1))
