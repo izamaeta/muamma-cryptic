@@ -116,3 +116,20 @@ own timestamp and expire after 12 hours. Admin pages send
 
 CSRF protection is enabled for every POST, including the game API. Pages
 expose the token in a meta tag and the client sends it as `X-CSRFToken`.
+
+
+## Puzzle management
+
+The admin form checks more than required fields: the answer length must
+match the enumeration, a definition must appear in the clue, clues without
+a definition need at least one hint, and dates cannot be in the past or
+already taken. Answers are stored uppercased with Turkish rules.
+
+Published or played puzzles are locked: kind, status, answer, enumeration
+and date keep their stored values regardless of what the form submits,
+while clue text and explanation stay editable for typo fixes. Locked
+puzzles cannot be deleted.
+
+The stock indicator counts consecutive ready days from today rather than
+the total number of scheduled puzzles, because a single gap means a day
+without a puzzle.
