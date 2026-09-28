@@ -1,5 +1,7 @@
+from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import MetaData
 
 NAMING_CONVENTION = {
@@ -12,3 +14,8 @@ NAMING_CONVENTION = {
 
 db = SQLAlchemy(metadata=MetaData(naming_convention=NAMING_CONVENTION))
 migrate = Migrate()
+csrf = CSRFProtect()
+
+login_manager = LoginManager()
+login_manager.login_view = "admin.login"
+login_manager.login_message = "Devam etmek için giriş yap."

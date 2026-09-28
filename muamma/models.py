@@ -1,3 +1,4 @@
+from flask_login import UserMixin
 import uuid
 from datetime import UTC, date, datetime
 
@@ -121,3 +122,12 @@ class Event(db.Model):
     )
 
     __table_args__ = (Index("ix_events_puzzle_id_type", "puzzle_id", "type"),)
+
+class Admin(UserMixin, db.Model):
+    __tablename__ = "admins"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
