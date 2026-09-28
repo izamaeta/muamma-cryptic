@@ -70,3 +70,28 @@ the puzzle.
 Two simultaneous first requests from the same player could both try to
 create a play row; the unique constraint rejects the second one. This is
 rare enough to leave for now.
+
+
+
+## Assists
+
+The first hint is the definition when the clue has one. Some clues have
+no separable definition (cryptic definitions, &lit clues, visual clues
+such as HIJKLMNO for WATER), so the definition is optional and those
+puzzles start with their own hints.
+
+Letters are revealed left to right and the last one is never revealed,
+since that would equal showing the answer. Revealing the answer finishes
+the play; for the daily puzzle on its own day it also resets the streak,
+so the client asks for confirmation first.
+
+Hints used and letters revealed are stored on the play, so progress is
+restored on reload. All API errors are returned as JSON with an `error`
+code.
+
+## Practice and stats
+
+`/tadimlik` redirects to a random ready practice puzzle the player has not
+finished, so each puzzle has a stable URL. Player stats are computed from
+`plays` on request; the numbers are small per player and do not need to be
+stored.
