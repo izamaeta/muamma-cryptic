@@ -16,6 +16,7 @@
   --red-ink: #b31b1b;
   --seal-ring: #b31b1b;
   --band-sealed: #0b1f5c;
+  --fodder: #0b1f5c;
 
   --tile-border: #c9d6ee;
   --tile-fill: #f7fafd;
@@ -71,6 +72,7 @@
     --tile-solved-ring: #178a88;
     --tile-solved-ink: #07122f;
     --band-sealed: #050c26;
+    --fodder: #8fa6ff;
 
     color-scheme: dark;
   }
@@ -112,6 +114,7 @@
   --tile-solved-ring: #178a88;
   --tile-solved-ink: #07122f;
   --band-sealed: #050c26;
+  --fodder: #8fa6ff;
 
   color-scheme: dark;
 }
@@ -911,7 +914,8 @@ button.primary:hover {
 
 .result,
 .confirm,
-.stats-window {
+.stats-window,
+.glossary {
   width: 100vw;
   max-width: 100vw;
   height: 100dvh;
@@ -925,13 +929,15 @@ button.primary:hover {
 
 .result:not([open]),
 .confirm:not([open]),
-.stats-window:not([open]) {
+.stats-window:not([open]),
+.glossary:not([open]) {
   display: none;
 }
 
 .result::backdrop,
 .confirm::backdrop,
-.stats-window::backdrop {
+.stats-window::backdrop,
+.glossary::backdrop {
   background: rgb(7 18 47 / 60%);
 }
 
@@ -1282,6 +1288,10 @@ button.primary:hover {
   gap: 0.5rem;
 }
 
+.status-form {
+  display: inline;
+}
+
 .delete-form {
   margin-top: 2rem;
 }
@@ -1441,4 +1451,301 @@ button.primary:hover {
     border-radius: 12px;
     font-size: 1.9rem;
   }
+}
+
+/* Guide and glossary
+   These three colours appear only here. In the game itself the clue carries
+   the definition highlight and nothing else. */
+
+.part-tanim {
+  padding: 0.05em 0.25em;
+  color: var(--def-ink);
+  background: var(--def-bg);
+  border-radius: 8px;
+}
+
+.part-gosterge {
+  text-decoration: underline;
+  text-decoration-color: var(--red-ink);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+}
+
+.part-malzeme {
+  padding: 0.05em 0.2em;
+  border: 2px dashed var(--fodder);
+  border-radius: 6px;
+}
+
+.role {
+  padding: 0.1rem 0.45rem;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: var(--chip);
+  border-radius: 999px;
+}
+
+.role-tanim {
+  color: var(--def-ink);
+  background: var(--def-bg);
+}
+
+.role-gosterge {
+  color: var(--red-ink);
+  box-shadow: inset 0 -3px 0 var(--red-ink);
+}
+
+.role-malzeme {
+  color: var(--ink);
+  border: 2px dashed var(--fodder);
+}
+
+.guide {
+  max-width: 62ch;
+}
+
+.guide-lead {
+  color: var(--muted);
+  font-size: 1.15rem;
+}
+
+.guide-rule,
+.guide-tips {
+  padding-left: 1.2rem;
+}
+
+.guide-rule li,
+.guide-tips li {
+  margin-bottom: 0.5rem;
+}
+
+.guide-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.guide-table {
+  width: 100%;
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+}
+
+.guide-table th,
+.guide-table td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--card-border);
+}
+
+/* Anatomy box */
+
+.anatomy {
+  padding: 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+}
+
+.anatomy-clue {
+  margin: 0 0 1rem;
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  line-height: 1.6;
+}
+
+.anatomy-clue .part {
+  min-height: 0;
+  padding: 0.05em 0.25em;
+  font: inherit;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.anatomy-clue .part-tanim {
+  background: var(--def-bg);
+}
+
+.anatomy-clue .part-malzeme {
+  border: 2px dashed var(--fodder);
+}
+
+.anatomy-clue .part-gosterge {
+  border: 0;
+}
+
+.anatomy-clue .part.lit {
+  outline: 3px solid var(--turquoise-deep);
+  outline-offset: 2px;
+}
+
+.anatomy-rows {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+}
+
+.anatomy-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.5rem;
+  border-radius: 12px;
+}
+
+.anatomy-row.lit {
+  background: var(--chip);
+}
+
+.anatomy-row dt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: baseline;
+  font-family: var(--serif);
+}
+
+.anatomy-row dd {
+  margin: 0;
+  color: var(--muted);
+}
+
+.anatomy-formula {
+  padding: 0.6rem 0.75rem;
+  font-family: var(--serif);
+  background: var(--chip);
+  border-radius: 12px;
+}
+
+/* Types */
+
+.tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  min-height: 40px;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+}
+
+.tab[aria-selected="true"] {
+  color: #ffffff;
+  background: var(--navy);
+  border-color: var(--navy);
+}
+
+:root[data-theme="dark"] .tab[aria-selected="true"] {
+  color: var(--navy);
+  background: #3cc7c3;
+  border-color: #3cc7c3;
+}
+
+.type-card {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+}
+
+.type-card summary {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.5rem 0;
+}
+
+.example-parts {
+  margin: 0.5rem 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.example-parts li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin-bottom: 0.3rem;
+}
+
+.example-solution {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+}
+
+/* Glossary window */
+
+.glossary-link {
+  margin: 0.75rem 0 0;
+}
+
+.glossary-link button {
+  min-height: 0;
+  padding: 0.35rem 0.7rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.glossary-panel {
+  width: min(28rem, 100%);
+  text-align: left;
+}
+
+.glossary-search {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--tile-fill);
+  border: 2px solid var(--card-border);
+  border-radius: 14px;
+}
+
+.glossary-body {
+  max-height: 50vh;
+  margin-bottom: 0.75rem;
+  overflow-y: auto;
+}
+
+.glossary-group h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.glossary-name {
+  margin: 0.5rem 0 0.1rem;
+  font-family: var(--serif);
+  font-weight: 600;
+}
+
+.glossary-summary {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.glossary-empty {
+  color: var(--muted);
+}
+
+.glossary-more {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
 }

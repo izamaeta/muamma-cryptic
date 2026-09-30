@@ -46,6 +46,10 @@
     <button type="button" data-action="reveal">Mührü aç</button>
   </div>
 
+  <p class="glossary-link">
+    <button type="button" class="glossary-open">Gösterge sözlüğü</button>
+  </p>
+
   <ol class="hints">
     {% for hint in used_hints %}<li>{{ hint }}</li>{% endfor %}
   </ol>
@@ -63,6 +67,37 @@
       </p>
     {% endif %}
   </div>
+
+  <dialog class="glossary" aria-labelledby="glossary-title-{{ puzzle.id }}">
+    <div class="result-panel glossary-panel">
+      <h2 class="result-title" id="glossary-title-{{ puzzle.id }}">Gösterge sözlüğü</h2>
+      <label class="visually-hidden" for="glossary-search-{{ puzzle.id }}">Gösterge ara</label>
+      <input id="glossary-search-{{ puzzle.id }}" class="glossary-search" type="text"
+             inputmode="search" placeholder="Gösterge ara" autocomplete="off" spellcheck="false">
+      <div class="glossary-body">
+        {% for group in guide.glossary_groups() %}
+          <section class="glossary-group">
+            <h3>{{ group.label }}</h3>
+            {% for kind in group.types %}
+              <div class="glossary-type">
+                <p class="glossary-name">{{ kind.name }}</p>
+                <p class="glossary-summary">{{ kind.summary }}</p>
+                <p class="chip-row">
+                  {% for word in kind.indicators %}<span class="chip" data-word="{{ word }}">{{ word }}</span>{% endfor %}
+                </p>
+              </div>
+            {% endfor %}
+            <script type="module" src="{{ url_for('static', filename='js/glossary.js') }}"></script>
+</section>
+        {% endfor %}
+      </div>
+      <p class="glossary-empty" hidden>Bu aramaya uyan gösterge yok.</p>
+      <p class="glossary-more"><a href="{{ url_for('main.how_to_play') }}">Rehberin tamamı</a></p>
+      <form method="dialog">
+        <button class="result-close" autofocus>Kapat</button>
+      </form>
+    </div>
+  </dialog>
 
   <dialog class="confirm" aria-labelledby="confirm-title-{{ puzzle.id }}">
     <div class="result-panel">
