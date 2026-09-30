@@ -3,6 +3,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from muamma.config import Config
 from muamma.extensions import csrf, db, limiter, login_manager, migrate
+from muamma import guide
 from muamma.headers import apply_security_headers
 from muamma.text import minutes_seconds, turkish_long_date
 
@@ -28,6 +29,7 @@ def create_app(config_class=Config):
     app.after_request(apply_security_headers)
     app.add_template_filter(turkish_long_date, "long_date")
     app.add_template_filter(minutes_seconds, "mmss")
+    app.jinja_env.globals["guide"] = guide
 
     from muamma import models  # noqa: F401
     from muamma.admin import bp as admin_bp
