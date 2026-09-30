@@ -120,8 +120,10 @@
       {% for tip in guide.SOLVING_TIPS %}<li>{{ tip }}</li>{% endfor %}
     </ul>
 
-    <h2>İsim nereden geliyor?</h2>
-    {% for paragraph in guide.ORIGIN %}<p>{{ paragraph }}</p>{% endfor %}
+    <p class="guide-more">
+      Adı nereden geliyor?
+      <a href="{{ url_for('main.about') }}">Muamma nedir?</a>
+    </p>
 
     <p class="cta"><a href="{{ url_for('main.index') }}">{{ guide.CLOSING }}</a></p>
   </article>

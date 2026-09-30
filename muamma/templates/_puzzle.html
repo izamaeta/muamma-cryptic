@@ -46,9 +46,11 @@
     <button type="button" data-action="reveal">Mührü aç</button>
   </div>
 
-  <p class="glossary-link">
-    <button type="button" class="glossary-open">Gösterge sözlüğü</button>
-  </p>
+  {% if not streak_risk %}
+    <p class="glossary-link">
+      <button type="button" class="glossary-open">Gösterge sözlüğü</button>
+    </p>
+  {% endif %}
 
   <ol class="hints">
     {% for hint in used_hints %}<li>{{ hint }}</li>{% endfor %}
@@ -68,6 +70,7 @@
     {% endif %}
   </div>
 
+  {% if not streak_risk %}
   <dialog class="glossary" aria-labelledby="glossary-title-{{ puzzle.id }}">
     <div class="result-panel glossary-panel">
       <h2 class="result-title" id="glossary-title-{{ puzzle.id }}">Gösterge sözlüğü</h2>
@@ -98,6 +101,7 @@
       </form>
     </div>
   </dialog>
+  {% endif %}
 
   <dialog class="confirm" aria-labelledby="confirm-title-{{ puzzle.id }}">
     <div class="result-panel">

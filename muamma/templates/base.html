@@ -41,12 +41,14 @@
           <a href="{{ url_for('main.archive') }}">Arşiv</a>
           <button type="button" class="stats-open">İstatistik</button>
           <a href="{{ url_for('main.how_to_play') }}">Nasıl oynanır</a>
+          <a href="{{ url_for('main.about') }}">Muamma nedir?</a>
         </nav>
       </details>
       <nav class="site-nav">
         <a href="{{ url_for('main.practice_random') }}"{% if request.path.startswith('/tadimlik') %} aria-current="page"{% endif %}>Tadımlık</a>
         <a href="{{ url_for('main.archive') }}"{% if request.path == '/arsiv' or request.path.startswith('/bulmaca/') %} aria-current="page"{% endif %}>Arşiv</a>
         <a href="{{ url_for('main.how_to_play') }}"{% if request.path == '/nasil-oynanir' %} aria-current="page"{% endif %}>Nasıl oynanır</a>
+        <a href="{{ url_for('main.about') }}"{% if request.path == '/muamma-nedir' %} aria-current="page"{% endif %}>Muamma nedir?</a>
       </nav>
       <a class="brand" href="{{ url_for('main.index') }}">
         <img src="{{ url_for('static', filename='img/logo/logo-96.png') }}"
@@ -80,7 +82,7 @@
       <a href="{{ url_for('main.practice_random') }}">Tadımlık</a>
       <a href="{{ url_for('main.archive') }}">Arşiv</a>
       <a href="{{ url_for('main.how_to_play') }}">Nasıl oynanır</a>
-      <a href="{{ url_for('main.minute_cryptic') }}">Minute Cryptic Türkçe</a>
+      <a href="{{ url_for('main.about') }}">Muamma nedir?</a>
       <a href="{{ url_for('main.privacy') }}">Gizlilik</a>
     </nav>
     <p>Her gece yarısı yeni bir muamma mühürlenir.</p>

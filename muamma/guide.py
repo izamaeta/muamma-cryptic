@@ -383,19 +383,6 @@ SOLVING_TIPS = [
     ),
 ]
 
-ORIGIN = [
-    (
-        "Muamma, divan edebiyatında bir şiir türünün adı: bir ismin, harfler üzerinde "
-        "oynanarak beyitlerin içine gizlendiği bir bilmece. Harf düşürmek, tersine "
-        "çevirmek, parçaları birleştirmek… Bugünkü cryptic ipuçlarının "
-        "teknikleriyle şaşırtıcı derecede benzer."
-    ),
-    (
-        "Yani oynadığın oyun, bu toprakların yüzyıllık bir kelime geleneğinin modern "
-        "hali. Adını da oradan alıyor."
-    ),
-]
-
 CLOSING = "Hazırsan bugünün muamması seni bekliyor."
 
 ROLE_CLASSES = {TANIM: "tanim", GOSTERGE: "gosterge", MALZEME: "malzeme"}

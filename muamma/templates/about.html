@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Muamma nedir? – Muamma{% endblock %}
+{% block description %}Adını divan edebiyatının şifreli şiirlerinden alan, her gece yarısı yeni bir bulmacanın mühürlendiği günlük Türkçe kelime oyunu.{% endblock %}
+
+{% block content %}
+  <article class="about">
+    <section class="about-hero">
+      <h1>Mühürlü bir kelimenin hikâyesi</h1>
+      <p class="about-opening">
+        Yüzyıllar önce şairler, bir ismi bir beytin içine öyle saklardı ki onu
+        bulmak için harfleri tek tek çözmek gerekirdi. Bu bilmecelerin adı
+        muammaydı.
+      </p>
+
+      <p>Kelime Arapça kökenli ve “örtülü, gizlenmiş” demek. Divan edebiyatında muamma, çoğu zaman bir kişinin adını beytin içine gizleyen kısa bir şiir türüydü. Okuyan, beyti ilk bakışta sıradan bir dize gibi okurdu. Ama işin sırrını bilen, kelimelere başka bir gözle bakardı: bir kelimenin başını keser, bir başkasını tersine çevirir, harfleri yer değiştirir, parçaları birleştirirdi. En sonunda beytin içinden bir isim çıkardı.</p>
+
+      <p>Muamma yazmak ve çözmek bir ustalık işiydi. Özellikle 15. ve 16. yüzyıllarda şairler bu türde maharetlerini gösterir, muammalar meclislerde çözülür, kurallarını anlatan kitaplar yazılırdı. Bir muammayı çözmek, bir kilidin anahtarını bulmak gibiydi.</p>
+
+      <p>Bugün dünyanın başka köşelerinde “cryptic” adıyla bilinen bulmacaların teknikleri de şaşırtıcı derecede benzer: harf atmak, tersine çevirmek, karıştırmak, parçaları birleştirmek. Muamma bu eski oyunu yeniden canlandırıyor; divanların sayfalarından alıp her sabah cebine koyuyor.</p>
+
+      <p class="about-closing">
+        Oynadığın oyun, bu toprakların yüzyıllık bir kelime geleneğinin bugünkü hali.
+      </p>
+    </section>
+
+    <section class="about-section">
+      <h2>Her gün bir mühür, her mühürde bir sır</h2>
+      <p>Muamma, her gün tek bir ipucu sunan bir Türkçe kelime oyunu. İpucunun bir kısmı cevabın düz anlamını verir, geri kalanı aynı cevaba harflerle oynayarak ulaşmanı sağlayan bir şifredir. Bulmacayı çözmek, mührü kırmak demek.</p>
+
+      <div class="about-cards">
+        <div class="about-card">
+          <h3>Tek ipucu</h3>
+          <p>Uzun bir bulmaca değil; tek bir cümle, tek bir cevap. Birkaç dakikanı alır, bütün gün aklında kalır.</p>
+        </div>
+        <div class="about-card">
+          <h3>İki yol, bir cevap</h3>
+          <p>Her ipucunda bir tanım ve bir kelime oyunu var. İkisi aynı cevabı gösterdiğinde doğru yoldasın.</p>
+        </div>
+        <div class="about-card">
+          <h3>Harflerle düşün</h3>
+          <p>Genel kültür değil, dikkat ister. Kelimelere anlamından çok harfleriyle bakmayı öğrendikçe kolaylaşır.</p>
+        </div>
+      </div>
+
+      <p><a href="{{ url_for('main.how_to_play') }}">Nasıl çözüleceğini öğren</a></p>
+    </section>
+
+    <section class="about-section">
+      <h2>Her gece yarısı yeni bir muamma mühürlenir</h2>
+      <dl class="about-rhythm">
+        <div>
+          <dt>Günün muamması</dt>
+          <dd>Türkiye saatiyle her gece yarısı yeni bir bulmaca yayınlanır. Herkes aynı gün aynı ipucunu çözer.</dd>
+        </div>
+        <div>
+          <dt>Seri</dt>
+          <dd>Günün muammasını o gün çözdükçe serin büyür. İpucu almak ya da harf açmak seriyi bozmaz; mührü açmak ya da bir günü kaçırmak bozar.</dd>
+        </div>
+        <div>
+          <dt>Haftanın çetin muamması</dt>
+          <dd>Pazar günleri bulmaca bilerek daha zordur. Haftanın en tatlı meydan okuması.</dd>
+        </div>
+        <div>
+          <dt>Tadımlık ve arşiv</dt>
+          <dd>Günün muamması bitti mi? Tadımlıklarla istediğin kadar pratik yap, arşivde kaçırdığın günleri çöz. Bunlar seriye sayılmaz, sadece keyif için.</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="about-section about-cat">
+      <img src="{{ url_for('static', filename='img/logo/logo-192.png') }}" width="192" height="192" alt="Muamma'nın fesli kedisi">
+      <div>
+        <h2>Bir de kedimiz var</h2>
+        <p>Fesini hiç çıkarmayan gri kedimiz, Muamma'nın bekçisi. Her gün yeni mührü o basar, çözüldüğünde en çok o sevinir. Cevaba erken bakarsan görmemiş gibi yapar ama biliriz, biraz alınır.</p>
+      </div>
+    </section>
+
+    <section class="about-end">
+      <p class="about-closing">Mühür seni bekliyor.</p>
+      <p><a class="result-action about-cta" href="{{ url_for('main.index') }}">Bugünün muammasını çöz</a></p>
+    </section>
+  </article>
+{% endblock %}

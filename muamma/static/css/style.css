@@ -1505,6 +1505,7 @@ button.primary:hover {
 
 .guide {
   max-width: 62ch;
+  margin-inline: auto;
 }
 
 .guide-lead {
@@ -1748,4 +1749,134 @@ button.primary:hover {
 .glossary-more {
   margin: 0 0 0.75rem;
   font-size: 0.9rem;
+}
+
+/* Muamma nedir? */
+
+.about {
+  max-width: 64ch;
+  margin-inline: auto;
+}
+
+.about-hero h1 {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: 650;
+}
+
+.about-opening {
+  margin: 0 0 1.75rem;
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-style: italic;
+  font-weight: 550;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+.about-closing {
+  margin: 1.75rem 0 0;
+  padding-top: 1.25rem;
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border-top: 1px solid var(--card-border);
+  text-wrap: balance;
+}
+
+.about-section {
+  margin-top: 3rem;
+}
+
+.about-cards {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+
+.about-card {
+  padding: 1rem 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+}
+
+.about-card h3 {
+  margin: 0 0 0.35rem;
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.about-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.about-rhythm {
+  display: grid;
+  gap: 1rem;
+  margin: 1.25rem 0 0;
+}
+
+.about-rhythm dt {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.about-rhythm dd {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+}
+
+.about-cat {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.about-cat img {
+  width: 140px;
+  height: 140px;
+}
+
+.about-cat h2 {
+  margin-top: 0;
+}
+
+.about-cat div {
+  flex: 1;
+  min-width: 16rem;
+}
+
+.about-end {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.about-end .about-closing {
+  border-top: 0;
+}
+
+.about-cta {
+  display: inline-block;
+  width: auto;
+  padding: 0.7rem 1.5rem;
+}
+
+@media (min-width: 680px) {
+  .about-hero h1 {
+    font-size: 2.4rem;
+  }
+
+  .about-opening {
+    font-size: 1.9rem;
+  }
+
+  .about-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

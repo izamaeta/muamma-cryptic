@@ -128,9 +128,9 @@ def archive_puzzle(day):
     )
 
 
-@bp.get("/minute-cryptic-turkce")
-def minute_cryptic():
-    return render_template("minute_cryptic.html")
+@bp.get("/muamma-nedir")
+def about():
+    return render_template("about.html")
 
 
 @bp.get("/istatistik")
@@ -168,7 +168,7 @@ def sitemap():
         url_for("main.index"),
         url_for("main.how_to_play"),
         url_for("main.archive"),
-        url_for("main.minute_cryptic"),
+        url_for("main.about"),
         url_for("main.privacy"),
     ]
     urls = [{"loc": site + path} for path in paths]
