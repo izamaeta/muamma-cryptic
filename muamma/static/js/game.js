@@ -1,3 +1,17 @@
+import {
+  dropLetters,
+  fadeWash,
+  flash,
+  flipTile,
+  flipTiles,
+  motionOk,
+  riseIn,
+  spinNumber,
+  toast,
+  wait,
+} from "./motion.js";
+import { resultWindow, revealAsker } from "./result.js";
+
 const section = document.querySelector(".puzzle");
 
 if (section) {
@@ -8,15 +22,21 @@ if (section) {
   const feedback = section.querySelector(".feedback");
   const solution = section.querySelector(".solution");
   const hints = section.querySelector(".hints");
+  const wrongList = section.querySelector(".wrong-guesses");
   const pattern = section.querySelector(".pattern");
   const clueText = section.querySelector(".clue-text");
+  const tileBox = section.querySelector(".tiles");
   const tiles = [...section.querySelectorAll(".tile")];
   const streak = document.querySelector(".streak-count");
-  const shareButton = section.querySelector(".share-button");
-  const countdown = section.querySelector(".countdown");
+  const shareButtons = [...section.querySelectorAll(".share-button")];
+  const countdowns = [...section.querySelectorAll(".countdown")];
+  const openResult = section.querySelector(".result-open");
+  const wash = document.querySelector(".band-wash");
   const sealCap = document.querySelector(".seal-cap");
   const sealLabel = document.querySelector(".seal-label");
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const result = resultWindow(section.querySelector(".result"));
+  const askReveal = revealAsker(section.querySelector(".confirm"));
 
   const messages = {
     wrong_length: "Harf sayısı tutmuyor.",
@@ -26,21 +46,61 @@ if (section) {
     rate_limited: "Çok hızlı gidiyorsun, biraz bekle.",
   };
 
+  let busy = false;
+
+  async function run(task) {
+    if (busy) return;
+    busy = true;
+    section.dataset.busy = "1";
+    try {
+      await task();
+    } finally {
+      busy = false;
+      section.dataset.busy = "";
+    }
+  }
+
+  const limit = Number(input.dataset.letters) || 64;
+  let undrop = null;
+
   const lettersOf = (text) =>
     [...text.toLocaleUpperCase("tr")].filter((ch) => /\p{L}/u.test(ch));
+
+  const slotOf = (tile) => tile.querySelector(".letter");
+
+  const onlyLetters = (text) =>
+    [...text].filter((ch) => /\p{L}/u.test(ch)).slice(0, limit).join("");
 
   function renderTiles() {
     const typed = lettersOf(input.value);
     tiles.forEach((tile, i) => {
-      const before = tile.textContent;
-      tile.textContent = typed[i] ?? tile.dataset.given;
+      const slot = slotOf(tile);
+      const before = slot.textContent;
+      const next = typed[i] ?? tile.dataset.given;
+      slot.textContent = next;
+      tile.classList.toggle("filled", Boolean(next));
       tile.classList.toggle("given", !typed[i] && Boolean(tile.dataset.given));
-      if (tile.textContent && tile.textContent !== before) {
-        tile.classList.remove("pop");
-        tile.offsetWidth;
-        tile.classList.add("pop");
+      if (next && next !== before) {
+        flash(tile, "pop", 160);
       }
     });
+  }
+
+  function cancelDrop() {
+    if (!undrop) return;
+    undrop();
+    undrop = null;
+  }
+
+  async function clearTyped() {
+    const falling = tiles
+      .filter((tile) => !tile.dataset.given && slotOf(tile).textContent)
+      .map(slotOf);
+
+    undrop = await dropLetters(falling);
+    input.value = "";
+    renderTiles();
+    cancelDrop();
   }
 
   function setGiven(letters) {
@@ -50,10 +110,11 @@ if (section) {
     renderTiles();
   }
 
-  function highlight(parts) {
+  function highlight(parts, fresh) {
     if (!parts) return;
     const mark = document.createElement("mark");
     mark.className = "definition";
+    if (fresh && motionOk()) mark.classList.add("ink");
     mark.textContent = parts[1];
     clueText.replaceChildren(parts[0], mark, parts[2]);
   }
@@ -61,26 +122,42 @@ if (section) {
   function startCountdown(seconds) {
     if (!seconds) return;
     const end = Date.now() + seconds * 1000;
-    const label = countdown.querySelector(".countdown-time");
-    countdown.hidden = false;
+    const pad = (n) => String(n).padStart(2, "0");
+    countdowns.forEach((element) => {
+      element.hidden = false;
+    });
 
     const tick = () => {
       const left = Math.max(0, Math.round((end - Date.now()) / 1000));
-      if (left === 0) {
-        countdown.textContent = "Yeni muamma hazır, sayfayı yenile.";
-        return;
-      }
-      const pad = (n) => String(n).padStart(2, "0");
-      label.textContent = `${pad(Math.floor(left / 3600))}:${pad(Math.floor((left % 3600) / 60))}:${pad(left % 60)}`;
-      setTimeout(tick, 1000);
+      countdowns.forEach((element) => {
+        const label = element.querySelector(".countdown-time");
+        if (left === 0) {
+          element.textContent = "Yeni muamma hazır, sayfayı yenile.";
+        } else if (label) {
+          label.textContent = `${pad(Math.floor(left / 3600))}:${pad(
+            Math.floor((left % 3600) / 60)
+          )}:${pad(left % 60)}`;
+        }
+      });
+      if (left > 0) setTimeout(tick, 1000);
     };
     tick();
   }
 
   function enableShare(text) {
     if (!text) return;
-    shareButton.dataset.share = text;
-    shareButton.hidden = false;
+    shareButtons.forEach((button) => {
+      button.dataset.share = text;
+      button.hidden = false;
+    });
+  }
+
+  function addWrongGuess(text) {
+    if (!text) return;
+    const item = document.createElement("li");
+    item.textContent = text;
+    wrongList.append(item);
+    riseIn(item);
   }
 
   async function post(action, body = {}) {
@@ -101,7 +178,6 @@ if (section) {
   }
 
   function breakSeal(solved) {
-    document.body.dataset.state = "opened";
     if (sealLabel) {
       sealLabel.textContent = solved ? "Mühür kırıldı" : "Mühür açıldı";
     }
@@ -111,89 +187,136 @@ if (section) {
       note.textContent = "Muamma çözüldü!";
       sealCap.append(note);
     }
+    const fading = fadeWash(wash);
+    document.body.dataset.state = "opened";
+    return fading;
   }
 
-  function showSolution(data, message, solved) {
+  async function finish(data, message, solved) {
     form.hidden = true;
     helpers.hidden = true;
     input.value = "";
     setGiven(lettersOf(data.answer));
     highlight(data.highlight);
-    breakSeal(solved);
+    feedback.textContent = message;
+
     if (solved) {
-      tiles.forEach((tile) => {
+      await flipTiles(tiles, (tile) => {
         tile.classList.remove("given");
         tile.classList.add("solved");
       });
     }
-    feedback.textContent = message;
+
+    const sealing = breakSeal(solved);
+    await wait(motionOk() ? 200 : 0);
+
     solution.querySelector(".answer").textContent = data.answer;
     solution.querySelector(".explanation").textContent = data.explanation;
     solution.hidden = false;
-    streak.textContent = data.streak;
+    if (openResult) openResult.hidden = false;
     enableShare(data.share);
     startCountdown(data.next_in);
+
+    await Promise.all([riseIn(solution), spinNumber(streak, data.streak), sealing]);
+
+    if (result) {
+      result.fill(data, solved);
+      await result.open();
+    }
   }
 
-  input.addEventListener("input", renderTiles);
-  section.querySelector(".tiles").addEventListener("click", () => input.focus());
+  input.addEventListener("input", () => {
+    cancelDrop();
+    const cleaned = onlyLetters(input.value);
+    if (cleaned !== input.value) input.value = cleaned;
+    renderTiles();
+  });
+  tileBox.addEventListener("click", () => input.focus());
 
-  form.addEventListener("submit", async (event) => {
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
-    feedback.textContent = "";
+    run(async () => {
+      feedback.textContent = "";
+      const guess = input.value;
+      const data = await post("guess", { guess });
+      if (!data) return;
 
-    const data = await post("guess", { guess: input.value });
-    if (!data) return;
-
-    if (!data.correct) {
-      feedback.textContent = "Olmadı, tekrar dene.";
-      const group = section.querySelector(".tiles");
-      group.classList.remove("shake");
-      group.offsetWidth;
-      group.classList.add("shake");
-      input.select();
-      return;
-    }
-    showSolution(data, "Doğru!", true);
+      if (!data.correct) {
+        feedback.textContent = "Olmadı, tekrar dene.";
+        flash(tileBox, "shake", 340);
+        flash(tileBox, "wrong", 540);
+        addWrongGuess(lettersOf(guess).join(""));
+        await wait(motionOk() ? 260 : 0);
+        await clearTyped();
+        input.focus();
+        return;
+      }
+      await finish(data, "Doğru!", true);
+    });
   });
 
-  helpers.addEventListener("click", async (event) => {
+  helpers.addEventListener("click", (event) => {
     const action = event.target.dataset.action;
     if (!action) return;
-    feedback.textContent = "";
 
-    if (action === "hint") {
-      const data = await post("hint");
-      if (!data) return;
-      const item = document.createElement("li");
-      item.textContent = data.text;
-      hints.append(item);
-      highlight(data.highlight);
-    } else if (action === "letter") {
-      const data = await post("letter");
-      if (!data) return;
-      pattern.textContent = data.pattern;
-      setGiven([...data.pattern.replaceAll(" ", "")]);
-    } else if (action === "reveal") {
-      const warning =
-        section.dataset.streakRisk === "1"
-          ? "Mührü açarsan serin sıfırlanır. Emin misin?"
-          : "Mührü açmak istediğine emin misin?";
-      if (!confirm(warning)) return;
-      const data = await post("reveal");
-      if (data) showSolution(data, "Cevap:", false);
-    }
+    run(async () => {
+      feedback.textContent = "";
+
+      if (action === "hint") {
+        const data = await post("hint");
+        if (!data) return;
+        const item = document.createElement("li");
+        item.textContent = data.text;
+        hints.append(item);
+        riseIn(item);
+        highlight(data.highlight, true);
+      } else if (action === "letter") {
+        const before = tiles.filter((tile) => tile.dataset.given).length;
+        const data = await post("letter");
+        if (!data) return;
+        pattern.textContent = data.pattern;
+        const letters = [...data.pattern.replaceAll(" ", "")];
+        const revealed = tiles[before];
+        tiles.forEach((tile, i) => {
+          if (i === before) return;
+          tile.dataset.given = letters[i] && letters[i] !== "_" ? letters[i] : "";
+        });
+        renderTiles();
+        if (revealed) {
+          await flipTile(revealed, () => {
+            revealed.dataset.given = letters[before];
+            renderTiles();
+          });
+        }
+      } else if (action === "reveal") {
+        if (!(await askReveal())) return;
+        const data = await post("reveal");
+        if (data) await finish(data, "Cevap:", false);
+      }
+    });
   });
 
-  shareButton.addEventListener("click", async () => {
-    const text = shareButton.dataset.share;
-    if (navigator.share) {
-      await navigator.share({ text }).catch(() => {});
-      return;
-    }
-    await navigator.clipboard.writeText(text);
-    feedback.textContent = "Sonuç panoya kopyalandı.";
+  shareButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const text = button.dataset.share;
+      if (navigator.share) {
+        await navigator.share({ text }).catch(() => {});
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        toast("Kopyalandı");
+      } catch {
+        feedback.textContent = "Kopyalanamadı, metni elle seçebilirsin.";
+      }
+    });
   });
 
-  startCountdown(Number(countdown.dataset.seconds));
+  if (openResult && result) {
+    openResult.addEventListener("click", () => result.open());
+    openResult.hidden = !result.ready;
+  }
+
+  startCountdown(Number(countdowns[0]?.dataset.seconds));
+  riseIn(section);
 }
