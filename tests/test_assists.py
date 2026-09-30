@@ -19,6 +19,11 @@ def post(client, puzzle, action, **body):
     return client.post(f"/api/puzzles/{puzzle.id}/{action}", json=body)
 
 
+def shown(pattern):
+    """Letters the pattern reveals, ignoring where they fall."""
+    return [ch for ch in pattern if ch not in "_ "]
+
+
 def test_first_hint_is_definition(client):
     puzzle = add_puzzle(hints=[EXTRA_HINT])
     first = post(client, puzzle, "hint").get_json()
@@ -31,16 +36,27 @@ def test_first_hint_is_definition(client):
     assert post(client, puzzle, "hint").status_code == 409
     
 
-def test_letters_are_revealed_in_order(client):
+def test_letters_open_one_at_a_time(client):
     puzzle = add_puzzle()
-    assert post(client, puzzle, "letter").get_json()["pattern"] == "A__"
-    assert post(client, puzzle, "letter").get_json()["pattern"] == "AR_"
+
+    first = post(client, puzzle, "letter").get_json()["pattern"]
+    assert len(shown(first)) == 1
+    assert first.count("_") == 2
+
+    second = post(client, puzzle, "letter").get_json()["pattern"]
+    assert len(shown(second)) == 2
+    assert second.count("_") == 1
+
     assert post(client, puzzle, "letter").status_code == 409
 
 
 def test_pattern_keeps_word_breaks(client):
     puzzle = add_puzzle(answer="GÖK YÜZÜ", enumeration="3,4")
-    assert post(client, puzzle, "letter").get_json()["pattern"] == "G__ ____"
+    pattern = post(client, puzzle, "letter").get_json()["pattern"]
+
+    words = pattern.split(" ")
+    assert [len(word) for word in words] == [3, 4]
+    assert len(shown(pattern)) == 1
 
 
 def test_reveal_ends_play_and_resets_streak(client):
@@ -62,11 +78,11 @@ def test_reveal_ends_play_and_resets_streak(client):
 def test_progress_survives_reload(client):
     puzzle = add_puzzle(hints=[EXTRA_HINT])
     post(client, puzzle, "hint")
-    post(client, puzzle, "letter")
+    pattern = post(client, puzzle, "letter").get_json()["pattern"]
     html = client.get("/").get_data(as_text=True)
 
     assert "Tanım: bal yapıcı" in html
-    assert "A__" in html
+    assert pattern in html
     assert EXTRA_HINT not in html
 
 
@@ -104,3 +120,52 @@ def test_stats_page_without_player(client):
 def test_clue_without_definition_starts_with_own_hints(client):
     puzzle = add_puzzle(definition=None, hints=[EXTRA_HINT])
     assert post(client, puzzle, "hint").get_json() == {"text": EXTRA_HINT, "remaining": 0}
+
+def open_all_letters(client, puzzle):
+    """Keep opening letters until the API refuses."""
+    patterns = []
+    while True:
+        response = post(client, puzzle, "letter")
+        if response.status_code == 409:
+            return patterns
+        patterns.append(response.get_json()["pattern"])
+
+
+def test_reveal_order_is_stable_for_a_player(client):
+    puzzle = add_puzzle(answer="GÖK YÜZÜ", enumeration="3,4")
+
+    first = post(client, puzzle, "letter").get_json()["pattern"]
+    assert first in client.get("/").get_data(as_text=True)
+
+    second = post(client, puzzle, "letter").get_json()["pattern"]
+    assert shown(first)[0] in shown(second)
+    assert second in client.get("/").get_data(as_text=True)
+
+
+def test_players_can_get_different_letters(app):
+    puzzle = add_puzzle(answer="GÖK YÜZÜ", enumeration="3,4")
+    orders = set()
+
+    for _ in range(12):
+        client = app.test_client()
+        orders.add(post(client, puzzle, "letter").get_json()["position"])
+
+    assert len(orders) > 1
+
+
+def test_the_last_letter_never_opens(client):
+    puzzle = add_puzzle(answer="GÖK YÜZÜ", enumeration="3,4")
+    patterns = open_all_letters(client, puzzle)
+
+    assert len(patterns) == 6
+    assert patterns[-1].endswith("_")
+    assert "_" in patterns[-1]
+
+
+def test_revealed_position_holds_that_letter(client):
+    puzzle = add_puzzle(answer="GÖK YÜZÜ", enumeration="3,4")
+    data = post(client, puzzle, "letter").get_json()
+
+    letters = data["pattern"].replace(" ", "")
+    assert letters[data["position"]] == "GÖKYÜZÜ"[data["position"]]
+    assert letters.count("_") == 6

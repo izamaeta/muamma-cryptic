@@ -17,8 +17,13 @@ def make(**fields):
 
 
 def test_tile_groups_follow_enumeration():
-    assert tile_groups(make(), 2) == [["G", "Ö", ""], ["", "", "", ""]]
-    assert letter_pattern(make(), 4) == "GÖK Y___"
+    assert tile_groups(make(), {0, 1}) == [["G", "Ö", ""], ["", "", "", ""]]
+    assert letter_pattern(make(), {0, 1, 2, 3}) == "GÖK Y___"
+
+
+def test_tile_groups_take_positions_in_any_order():
+    assert tile_groups(make(), {2, 4}) == [["", "", "K"], ["", "Ü", "", ""]]
+    assert letter_pattern(make(), {6}) == "___ ___Ü"
 
 
 def test_clue_parts_uses_turkish_case_rules():

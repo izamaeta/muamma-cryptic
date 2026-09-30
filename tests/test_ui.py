@@ -91,3 +91,46 @@ def test_input_limit_counts_letters_not_words(client):
     html = client.get("/").get_data(as_text=True)
     assert 'maxlength="7"' in html
     assert 'data-letters="7"' in html
+
+
+@pytest.mark.parametrize(
+    ("difficulty", "label"),
+    [(1, "Kolay"), (2, "Orta"), (3, "Zor")],
+)
+def test_difficulty_chip(client, difficulty, label):
+    add_puzzle(difficulty=difficulty)
+    html = client.get("/").get_data(as_text=True)
+    chips = html[html.index('class="chips"') : html.index("</div>", html.index('class="chips"'))]
+    assert f">{label}</span>" in chips
+
+
+def test_timer_chip_starts_running(client):
+    add_puzzle()
+    html = client.get("/").get_data(as_text=True)
+    assert 'data-running="1"' in html
+    assert 'data-elapsed="' in html
+
+
+def test_timer_chip_stops_when_finished(client):
+    puzzle = add_puzzle()
+    duration = guess(client, puzzle, "arı").get_json()["duration"]
+
+    html = client.get("/").get_data(as_text=True)
+    assert 'data-running="0"' in html
+    assert f'data-elapsed="{duration}"' in html
+
+
+def test_timer_survives_a_reload(client):
+    from datetime import UTC, datetime, timedelta
+
+    from muamma.timing import SESSION_KEY
+
+    puzzle = add_puzzle()
+    opened = datetime.now(UTC) - timedelta(minutes=3)
+    with client.session_transaction() as session:
+        session[SESSION_KEY] = {str(puzzle.id): opened.timestamp()}
+
+    client.get("/")
+    html = client.get("/").get_data(as_text=True)
+    elapsed = int(html.split('data-elapsed="')[1].split('"')[0])
+    assert elapsed >= 3 * 60
