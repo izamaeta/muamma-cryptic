@@ -4,7 +4,7 @@
 {% block state %}{{ "opened" if play and play.status != "in_progress" else "sealed" }}{% endblock %}
 
 {% block band %}
-  {% set band_title = "Bugünün muamması" %}
+  {% set band_title = "Haftanın çetin muamması" if sunday else "Bugünün muamması" %}
   {% set band_date = puzzle.publish_date if puzzle else today %}
   {% include "partials/_band.html" %}
 {% endblock %}

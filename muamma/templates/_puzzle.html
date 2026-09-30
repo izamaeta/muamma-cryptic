@@ -97,6 +97,7 @@
           <div><dt>Seri</dt><dd class="result-streak">{{ streak }}</dd></div>
         {% endif %}
       </dl>
+      <p class="result-community" {% if not community %}hidden{% endif %}>{{ community or "" }}</p>
       {% if is_archive %}
         <p class="result-note">Arşiv çözümleri seriye sayılmaz</p>
       {% endif %}

@@ -1,12 +1,12 @@
 import { minutesSeconds, motionOk, play } from "./motion.js";
 
-function closeOnBackdrop(dialog) {
+export function closeOnBackdrop(dialog) {
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
 }
 
-async function slideIn(dialog) {
+export async function slideIn(dialog) {
   if (!motionOk()) return;
   await play(
     dialog.querySelector(".result-panel"),
@@ -57,6 +57,13 @@ export function resultWindow(dialog) {
       set(".result-hints", data.hints);
       set(".result-letters", data.letters);
       set(".result-streak", data.streak);
+
+      const community = dialog.querySelector(".result-community");
+      if (community && data.community) {
+        community.textContent = data.community;
+        community.hidden = false;
+      }
+
       dialog.dataset.ready = "1";
     },
 

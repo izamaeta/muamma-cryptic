@@ -336,15 +336,23 @@ a:hover {
   box-shadow: 0 14px 34px rgb(11 31 92 / 18%);
 }
 
-.nav-menu-panel a {
+.nav-menu-panel a,
+.nav-menu-panel button {
+  min-height: 0;
   padding: 0.6rem 0.75rem;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
   color: var(--ink);
   font-weight: 700;
   text-decoration: none;
   border-radius: 12px;
 }
 
-.nav-menu-panel a:hover {
+.nav-menu-panel a:hover,
+.nav-menu-panel button:hover {
   background: var(--chip);
 }
 
@@ -902,7 +910,8 @@ button.primary:hover {
 /* Result window */
 
 .result,
-.confirm {
+.confirm,
+.stats-window {
   width: 100vw;
   max-width: 100vw;
   height: 100dvh;
@@ -915,12 +924,14 @@ button.primary:hover {
 }
 
 .result:not([open]),
-.confirm:not([open]) {
+.confirm:not([open]),
+.stats-window:not([open]) {
   display: none;
 }
 
 .result::backdrop,
-.confirm::backdrop {
+.confirm::backdrop,
+.stats-window::backdrop {
   background: rgb(7 18 47 / 60%);
 }
 
@@ -978,6 +989,16 @@ button.primary:hover {
   font-size: 1.2rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.result-community {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  background: var(--chip);
+  border-radius: 14px;
 }
 
 .result-note {
@@ -1086,6 +1107,12 @@ button.primary:hover {
 }
 
 /* Stats */
+
+.stats-empty {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
 
 .stats {
   display: grid;

@@ -7,11 +7,21 @@
     {% if warning %}Stok azalıyor, yeni bulmaca eklemelisin.{% endif %}
   </p>
 
+  {% if sundays %}
+    <p class="stock-low">
+      Pazar günü haftanın çetin muamması olmalı. Eksik ya da zorluğu Zor olmayan pazarlar:
+      {% for day in sundays %}{{ day.strftime("%d.%m.%Y") }}{{ ", " if not loop.last }}{% endfor %}
+    </p>
+  {% endif %}
+
   <h2>Önümüzdeki 14 gün</h2>
   <table class="calendar">
     {% for day, puzzle in calendar %}
       <tr>
-        <td>{{ day.strftime("%d.%m.%Y") }}</td>
+        <td>
+          {{ day.strftime("%d.%m.%Y") }}
+          {% if day.weekday() == 6 %}<span class="badge">pazar</span>{% endif %}
+        </td>
         <td>
           {% if puzzle %}
             <a href="{{ url_for('admin.puzzle_edit', puzzle_id=puzzle.id) }}">{{ puzzle.clue }}</a>

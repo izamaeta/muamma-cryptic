@@ -39,7 +39,7 @@
         <nav class="nav-menu-panel">
           <a href="{{ url_for('main.practice_random') }}">Tadımlık</a>
           <a href="{{ url_for('main.archive') }}">Arşiv</a>
-          <a href="{{ url_for('main.stats') }}">İstatistik</a>
+          <button type="button" class="stats-open">İstatistik</button>
           <a href="{{ url_for('main.how_to_play') }}">Nasıl oynanır</a>
         </nav>
       </details>
@@ -58,11 +58,11 @@
       </a>
       <div class="header-tools">
         <p class="streak">Seri <span class="streak-count">{{ streak }}</span></p>
-        <a class="icon-button" href="{{ url_for('main.stats') }}" aria-label="İstatistiklerin">
+        <button type="button" class="icon-button stats-open" aria-label="İstatistiklerin">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
           </svg>
-        </a>
+        </button>
         <button type="button" class="icon-button theme-toggle" aria-label="Koyu temaya geç" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>
@@ -85,6 +85,27 @@
     </nav>
     <p>Her gece yarısı yeni bir muamma mühürlenir.</p>
   </footer>
+  <dialog class="stats-window" aria-labelledby="stats-title">
+    <div class="result-panel">
+      <img class="result-logo" src="{{ url_for('static', filename='img/logo/logo-96.png') }}" width="96" height="96" alt="">
+      <h2 class="result-title" id="stats-title">İstatistiklerin</h2>
+      <dl class="result-stats stats">
+        <div><dt>Oynanan günlük bulmaca</dt><dd><span class="count" data-key="daily_played">0</span></dd></div>
+        <div><dt>Çözülen</dt><dd><span class="count" data-key="daily_solved">0</span></dd></div>
+        <div><dt>Çözme oranı</dt><dd>%<span class="count" data-key="solve_rate">0</span></dd></div>
+        <div><dt>Mevcut seri</dt><dd><span class="count" data-key="current_streak">0</span></dd></div>
+        <div><dt>En uzun seri</dt><dd><span class="count" data-key="max_streak">0</span></dd></div>
+        <div><dt>Çözülen tadımlık</dt><dd><span class="count" data-key="practice_solved">0</span></dd></div>
+      </dl>
+      <p class="stats-empty" hidden>
+        Henüz bir muamma çözmedin. <a href="{{ url_for('main.index') }}">Günün bulmacasıyla</a> başla.
+      </p>
+      <form method="dialog">
+        <button class="result-close" autofocus>Kapat</button>
+      </form>
+    </div>
+  </dialog>
+  <script type="module" src="{{ url_for('static', filename='js/stats.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
