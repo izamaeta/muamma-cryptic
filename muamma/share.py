@@ -1,9 +1,21 @@
-from datetime import date
+from datetime import UTC, date
 
 from flask import url_for
 
 from muamma import clock
 from muamma.models import Play, Puzzle
+
+
+def _as_utc(value):
+    return value if value.tzinfo else value.replace(tzinfo=UTC)
+
+
+def play_duration(play: Play) -> int | None:
+    """Seconds between the page opening and the puzzle being finished."""
+    if play.finished_at is None or play.started_at is None:
+        return None
+    seconds = (_as_utc(play.finished_at) - _as_utc(play.started_at)).total_seconds()
+    return max(0, int(seconds))
 
 
 def share_text(puzzle: Puzzle, play: Play, streak: int, url: str) -> str | None:
@@ -35,4 +47,5 @@ def finish_details(puzzle: Puzzle, play: Play, streak: int, today: date) -> dict
     return {
         "share": share_text(puzzle, play, streak, url_for("main.index", _external=True)),
         "next_in": clock.seconds_until_tomorrow() if is_today else None,
+        "duration": play_duration(play),
     }

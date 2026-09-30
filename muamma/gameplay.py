@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 
 from muamma.extensions import db
 from muamma.models import Event, Play, Player, Puzzle, utcnow
+from muamma.timing import opened_at
 
 
 def get_play(player: Player | None, puzzle: Puzzle) -> Play | None:
@@ -35,9 +36,28 @@ def get_or_create_play(player: Player, puzzle: Puzzle) -> Play:
             hints_used=0,
             letters_revealed=0,
             counts_for_streak=False,
+            started_at=opened_at(puzzle.id) or utcnow(),
         )
         db.session.add(play)
     return play
+
+
+def wrong_guesses(play: Play) -> list[str]:
+    """This player's incorrect guesses for this puzzle, oldest first."""
+    events = db.session.scalars(
+        select(Event)
+        .where(
+            Event.player_id == play.player_id,
+            Event.puzzle_id == play.puzzle_id,
+            Event.type == "guess",
+        )
+        .order_by(Event.created_at, Event.id)
+    )
+    return [
+        event.data["guess"]
+        for event in events
+        if not event.data.get("correct") and event.data.get("guess")
+    ]
 
 
 def log_event(player: Player, puzzle: Puzzle | None, type_: str, **data) -> None:
