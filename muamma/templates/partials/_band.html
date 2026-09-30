@@ -1,4 +1,5 @@
 {% set status = play.status if play else none %}
+<div class="band-wash"></div>
 <p class="band-date">{{ (band_date or today) | long_date }}</p>
 <div class="seal-layer">
   {% include "partials/_seal.html" %}

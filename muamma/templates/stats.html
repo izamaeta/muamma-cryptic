@@ -8,12 +8,12 @@
     <h1>İstatistiklerin</h1>
     <div class="panel">
       <dl class="stats">
-        <dt>Oynanan günlük bulmaca</dt><dd>{{ stats.daily_played }}</dd>
-        <dt>Çözülen</dt><dd>{{ stats.daily_solved }}</dd>
-        <dt>Çözme oranı</dt><dd>%{{ stats.solve_rate }}</dd>
-        <dt>Mevcut seri</dt><dd>{{ stats.current_streak }}</dd>
-        <dt>En uzun seri</dt><dd>{{ stats.max_streak }}</dd>
-        <dt>Çözülen tadımlık</dt><dd>{{ stats.practice_solved }}</dd>
+        <dt>Oynanan günlük bulmaca</dt><dd><span class="count">{{ stats.daily_played }}</span></dd>
+        <dt>Çözülen</dt><dd><span class="count">{{ stats.daily_solved }}</span></dd>
+        <dt>Çözme oranı</dt><dd><span class="count">%{{ stats.solve_rate }}</span></dd>
+        <dt>Mevcut seri</dt><dd><span class="count">{{ stats.current_streak }}</span></dd>
+        <dt>En uzun seri</dt><dd><span class="count">{{ stats.max_streak }}</span></dd>
+        <dt>Çözülen tadımlık</dt><dd><span class="count">{{ stats.practice_solved }}</span></dd>
       </dl>
     </div>
   {% else %}
@@ -22,5 +22,11 @@
       <h1>İstatistiklerin</h1>
       <p>Henüz bir bulmaca oynamadın. <a href="{{ url_for('main.index') }}">Günün bulmacasıyla</a> başla.</p>
     </div>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if stats %}
+    <script type="module" src="{{ url_for('static', filename='js/stats.js') }}"></script>
   {% endif %}
 {% endblock %}

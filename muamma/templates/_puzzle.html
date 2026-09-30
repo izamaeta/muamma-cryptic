@@ -1,5 +1,7 @@
 {% set finished = play and play.status != "in_progress" %}
 {% set solved = play and play.status == "solved" %}
+{% set is_practice = puzzle.kind == "practice" %}
+{% set is_archive = puzzle.kind == "daily" and not streak_risk %}
 <section class="puzzle" data-puzzle-id="{{ puzzle.id }}" data-streak-risk="{{ 1 if streak_risk else 0 }}">
   <p class="clue">
     <span class="clue-text">
@@ -16,16 +18,20 @@
     {% for group in tiles %}
       <div class="tile-group">
         {%- for letter in group -%}
-          <span class="tile{% if solved %} solved{% elif letter %} given{% endif %}" data-given="{{ letter }}">{{ letter }}</span>
+          <span class="tile{% if letter %} filled{% endif %}{% if solved %} solved{% elif letter %} given{% endif %}" data-given="{{ letter }}"><span class="letter">{{ letter }}</span></span>
         {%- endfor -%}
       </div>
     {% endfor %}
   </div>
   <p class="pattern visually-hidden">{{ pattern or "" }}</p>
 
+  <ul class="wrong-guesses" aria-label="Yanlış tahminlerin">
+    {% for guess in wrong_guesses %}<li>{{ guess }}</li>{% endfor %}
+  </ul>
+
   <form class="guess-form" {% if finished %}hidden{% endif %}>
     <label class="visually-hidden" for="guess-{{ puzzle.id }}">Cevabın</label>
-    <input id="guess-{{ puzzle.id }}" name="guess" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64" required>
+    <input id="guess-{{ puzzle.id }}" name="guess" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="{{ answer_length }}" data-letters="{{ answer_length }}" required>
     <button type="submit" class="primary">Kontrol et</button>
   </form>
 
@@ -44,9 +50,62 @@
   <div class="solution" {% if not finished %}hidden{% endif %}>
     <p class="answer">{% if finished %}{{ puzzle.answer }}{% endif %}</p>
     <p class="explanation">{% if finished %}{{ puzzle.explanation }}{% endif %}</p>
-    <button type="button" class="primary share-button" data-share="{{ share or '' }}" {% if not share %}hidden{% endif %}>Sonucu paylaş</button>
-    <p class="countdown" data-seconds="{{ next_in or '' }}" {% if not next_in %}hidden{% endif %}>
-      Yeni muammaya <span class="countdown-time"></span>
-    </p>
+    <button type="button" class="result-open" {% if not finished %}hidden{% endif %}>Sonucu göster</button>
+    {% if not is_practice %}
+      <button type="button" class="primary share-button" data-share="{{ share or '' }}" {% if not share %}hidden{% endif %}>Sonucu paylaş</button>
+      <p class="countdown" data-seconds="{{ next_in or '' }}" {% if not next_in %}hidden{% endif %}>
+        Yeni muammaya <span class="countdown-time"></span>
+      </p>
+    {% endif %}
   </div>
+
+  <dialog class="confirm" aria-labelledby="confirm-title-{{ puzzle.id }}">
+    <div class="result-panel">
+      <img class="result-logo" src="{{ url_for('static', filename='img/logo/logo-96.png') }}" width="96" height="96" alt="">
+      <h2 class="result-title" id="confirm-title-{{ puzzle.id }}">Mührü açmak istediğine emin misin?</h2>
+      <p class="result-note">
+        {%- if streak_risk -%}
+          Cevabı görürsen serin sıfırlanır.
+        {%- else -%}
+          Cevabı görürsen bu bulmacayı çözmüş sayılmazsın.
+        {%- endif -%}
+      </p>
+      <form method="dialog" class="confirm-actions">
+        <button value="no" class="confirm-cancel" autofocus>Vazgeç</button>
+        <button value="yes" class="confirm-reveal">Mührü aç</button>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog class="result" data-ready="{{ 1 if finished else 0 }}" aria-labelledby="result-title-{{ puzzle.id }}">
+    <div class="result-panel">
+      <img class="result-logo" src="{{ url_for('static', filename='img/logo/logo-96.png') }}" width="96" height="96" alt="">
+      <h2 class="result-title" id="result-title-{{ puzzle.id }}">
+        {%- if solved %}Tebrikler! Muamma çözüldü{% elif finished %}Mühür açıldı{% endif -%}
+      </h2>
+      <dl class="result-stats">
+        <div><dt>Süre</dt><dd class="result-duration">{{ duration | mmss }}</dd></div>
+        <div><dt>Tahmin</dt><dd class="result-guesses">{% if finished %}{{ play.guess_count }}{% endif %}</dd></div>
+        <div><dt>İpucu</dt><dd class="result-hints">{% if finished %}{{ play.hints_used }}{% endif %}</dd></div>
+        <div><dt>Açılan harf</dt><dd class="result-letters">{% if finished %}{{ play.letters_revealed }}{% endif %}</dd></div>
+        {% if not is_archive %}
+          <div><dt>Seri</dt><dd class="result-streak">{{ streak }}</dd></div>
+        {% endif %}
+      </dl>
+      {% if is_archive %}
+        <p class="result-note">Arşiv çözümleri seriye sayılmaz</p>
+      {% endif %}
+      {% if is_practice %}
+        <a class="result-action" href="{{ url_for('main.practice_random') }}">Başka bir tadımlık</a>
+      {% else %}
+        <button type="button" class="result-action share-button" data-share="{{ share or '' }}" {% if not share %}hidden{% endif %}>Sonucu paylaş</button>
+        <p class="countdown" data-seconds="{{ next_in or '' }}" {% if not next_in %}hidden{% endif %}>
+          Yeni muammaya <span class="countdown-time"></span>
+        </p>
+      {% endif %}
+      <form method="dialog">
+        <button class="result-close" autofocus>Kapat</button>
+      </form>
+    </div>
+  </dialog>
 </section>
