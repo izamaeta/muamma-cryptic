@@ -13,6 +13,7 @@ from muamma.puzzles import (
     hint_texts,
     is_playable,
     letter_pattern,
+    reveal_order,
 )
 from muamma.share import finish_details
 from muamma.text import normalize_answer
@@ -128,13 +129,19 @@ def letter(puzzle_id):
     puzzle = _playable_or_404(puzzle_id, clock.today())
     player, play = _active_play(puzzle)
 
-    if play.letters_revealed >= answer_length(puzzle.enumeration) - 1:
+    length = answer_length(puzzle.enumeration)
+    if play.letters_revealed >= length - 1:
         abort(409, description="no_more_letters")
 
+    order = reveal_order(player.id, puzzle.id, length)
+    position = order[play.letters_revealed]
     play.letters_revealed += 1
     log_event(player, puzzle, "reveal_letter", count=play.letters_revealed)
     db.session.commit()
-    return jsonify(pattern=letter_pattern(puzzle, play.letters_revealed))
+    return jsonify(
+        pattern=letter_pattern(puzzle, set(order[: play.letters_revealed])),
+        position=position,
+    )
 
 
 @bp.post("/puzzles/<int:puzzle_id>/reveal")

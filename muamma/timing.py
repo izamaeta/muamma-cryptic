@@ -18,8 +18,12 @@ def mark_opened(puzzle_id: int) -> None:
     """Remember in the session cookie when this puzzle page was opened."""
     if not has_request_context():
         return
-    entries = [(key, value) for key, value in _stored().items() if key != str(puzzle_id)]
-    entries.append((str(puzzle_id), datetime.now(UTC).timestamp()))
+    key = str(puzzle_id)
+    stored = _stored()
+    # an existing time is kept, so reloading the page does not restart the clock
+    value = stored[key] if opened_at(puzzle_id) else datetime.now(UTC).timestamp()
+    entries = [(other, when) for other, when in stored.items() if other != key]
+    entries.append((key, value))
     session[SESSION_KEY] = dict(entries[-KEPT_PUZZLES:])
 
 

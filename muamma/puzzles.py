@@ -1,3 +1,5 @@
+import hashlib
+import random
 from datetime import date
 
 from sqlalchemy import select
@@ -6,7 +8,9 @@ from muamma.extensions import db
 from muamma.gameplay import wrong_guesses
 from muamma.models import Play, Puzzle
 from muamma.text import normalize_answer, turkish_upper
-from muamma.share import finish_details
+from muamma.share import elapsed_seconds, finish_details
+
+DIFFICULTY_LABELS = {1: "Kolay", 2: "Orta", 3: "Zor"}
 
 def daily_puzzle_for(day: date) -> Puzzle | None:
     return db.session.scalar(
@@ -75,17 +79,35 @@ def hint_texts(puzzle: Puzzle) -> list[str]:
     first = [f"Tanım: {puzzle.definition}"] if puzzle.definition else []
     return [*first, *(puzzle.hints or [])]
 
-def tile_groups(puzzle: Puzzle, revealed: int) -> list[list[str]]:
+def reveal_order(player_id, puzzle_id: int, length: int) -> list[int]:
+    """Letter positions in this player's own order; the last letter is left out."""
+    positions = list(range(length - 1))
+    digest = hashlib.sha256(f"{player_id}:{puzzle_id}".encode()).digest()
+    random.Random(int.from_bytes(digest, "big")).shuffle(positions)
+    return positions
+
+
+def revealed_positions(play: Play | None, puzzle: Puzzle) -> set[int]:
+    """Positions this play has opened so far."""
+    if play is None or not play.letters_revealed:
+        return set()
+    # a play added in this request has no player_id until it is flushed
+    player_id = play.player_id or play.player.id
+    order = reveal_order(player_id, puzzle.id, answer_length(puzzle.enumeration))
+    return set(order[: play.letters_revealed])
+
+
+def tile_groups(puzzle: Puzzle, revealed: set[int]) -> list[list[str]]:
     """Answer letters grouped by word; unrevealed positions are empty."""
     letters = normalize_answer(puzzle.answer)
     groups, start = [], 0
     for size in enumeration_parts(puzzle.enumeration):
-        groups.append([letters[i] if i < revealed else "" for i in range(start, start + size)])
+        groups.append([letters[i] if i in revealed else "" for i in range(start, start + size)])
         start += size
     return groups
 
 
-def letter_pattern(puzzle: Puzzle, revealed: int) -> str:
+def letter_pattern(puzzle: Puzzle, revealed: set[int]) -> str:
     groups = tile_groups(puzzle, revealed)
     return " ".join("".join(ch or "_" for ch in group) for group in groups)
 
@@ -108,8 +130,8 @@ def puzzle_view(puzzle: Puzzle, play: Play | None, today: date) -> dict:
     """Template context for a puzzle, restoring the player's progress."""
     finished = play is not None and play.status != "in_progress"
     hints_used = play.hints_used if play else 0
-    revealed = play.letters_revealed if play else 0
-    shown = answer_length(puzzle.enumeration) if finished else revealed
+    opened = revealed_positions(play, puzzle)
+    shown = set(range(answer_length(puzzle.enumeration))) if finished else opened
 
     details = {"share": None, "next_in": None, "duration": None}
     if finished:
@@ -121,8 +143,10 @@ def puzzle_view(puzzle: Puzzle, play: Play | None, today: date) -> dict:
         "used_hints": hint_texts(puzzle)[:hints_used],
         "wrong_guesses": wrong_guesses(play) if play else [],
         "answer_length": answer_length(puzzle.enumeration),
+        "difficulty_label": DIFFICULTY_LABELS.get(puzzle.difficulty, "Orta"),
+        "elapsed": elapsed_seconds(puzzle, play),
         "tiles": tile_groups(puzzle, shown),
-        "pattern": letter_pattern(puzzle, revealed) if revealed and not finished else None,
+        "pattern": letter_pattern(puzzle, opened) if opened and not finished else None,
         "highlight": clue_parts(puzzle) if finished or hints_used else None,
         "streak_risk": puzzle.kind == "daily" and puzzle.publish_date == today,
         **details,

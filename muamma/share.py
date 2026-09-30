@@ -3,7 +3,8 @@ from datetime import UTC, date
 from flask import url_for
 
 from muamma import clock
-from muamma.models import Play, Puzzle
+from muamma.models import Play, Puzzle, utcnow
+from muamma.timing import opened_at
 
 
 def _as_utc(value):
@@ -39,6 +40,17 @@ def share_text(puzzle: Puzzle, play: Play, streak: int, url: str) -> str | None:
         lines.append(f"🔥 Seri: {streak}")
     lines.append(url)
     return "\n".join(lines)
+
+
+def elapsed_seconds(puzzle: Puzzle, play: Play | None) -> int:
+    """Seconds since the page was opened, frozen once the puzzle is finished."""
+    if play is not None and play.status != "in_progress":
+        return play_duration(play) or 0
+
+    started = play.started_at if play is not None else opened_at(puzzle.id)
+    if started is None:
+        return 0
+    return max(0, int((utcnow() - _as_utc(started)).total_seconds()))
 
 
 def finish_details(puzzle: Puzzle, play: Play, streak: int, today: date) -> dict:
