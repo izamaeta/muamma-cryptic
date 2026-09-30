@@ -4,6 +4,7 @@ import {
   flash,
   flipTile,
   flipTiles,
+  minutesSeconds,
   motionOk,
   riseIn,
   spinNumber,
@@ -31,6 +32,7 @@ if (section) {
   const shareButtons = [...section.querySelectorAll(".share-button")];
   const countdowns = [...section.querySelectorAll(".countdown")];
   const openResult = section.querySelector(".result-open");
+  const timer = section.querySelector(".chip.timer");
   const wash = document.querySelector(".band-wash");
   const sealCap = document.querySelector(".seal-cap");
   const sealLabel = document.querySelector(".seal-label");
@@ -144,6 +146,27 @@ if (section) {
     tick();
   }
 
+  let elapsed = Number(timer?.dataset.elapsed) || 0;
+  let ticking = null;
+
+  function startTimer() {
+    if (!timer || timer.dataset.running !== "1") return;
+    ticking = setInterval(() => {
+      elapsed += 1;
+      timer.textContent = minutesSeconds(elapsed);
+    }, 1000);
+  }
+
+  function stopTimer(seconds) {
+    if (ticking) {
+      clearInterval(ticking);
+      ticking = null;
+    }
+    if (!timer) return;
+    timer.dataset.running = "0";
+    if (typeof seconds === "number") timer.textContent = minutesSeconds(seconds);
+  }
+
   function enableShare(text) {
     if (!text) return;
     shareButtons.forEach((button) => {
@@ -207,6 +230,7 @@ if (section) {
       });
     }
 
+    stopTimer(data.duration);
     const sealing = breakSeal(solved);
     await wait(motionOk() ? 200 : 0);
 
@@ -271,20 +295,21 @@ if (section) {
         riseIn(item);
         highlight(data.highlight, true);
       } else if (action === "letter") {
-        const before = tiles.filter((tile) => tile.dataset.given).length;
         const data = await post("letter");
         if (!data) return;
         pattern.textContent = data.pattern;
+
         const letters = [...data.pattern.replaceAll(" ", "")];
-        const revealed = tiles[before];
-        tiles.forEach((tile, i) => {
-          if (i === before) return;
-          tile.dataset.given = letters[i] && letters[i] !== "_" ? letters[i] : "";
+        const opened = data.position;
+        const tile = tiles[opened];
+        tiles.forEach((other, i) => {
+          if (i === opened) return;
+          other.dataset.given = letters[i] && letters[i] !== "_" ? letters[i] : "";
         });
         renderTiles();
-        if (revealed) {
-          await flipTile(revealed, () => {
-            revealed.dataset.given = letters[before];
+        if (tile) {
+          await flipTile(tile, () => {
+            tile.dataset.given = letters[opened];
             renderTiles();
           });
         }
@@ -317,6 +342,7 @@ if (section) {
     openResult.hidden = !result.ready;
   }
 
+  startTimer();
   startCountdown(Number(countdowns[0]?.dataset.seconds));
   riseIn(section);
 }

@@ -11,8 +11,12 @@ export function play(element, keyframes, options) {
 }
 
 export function minutesSeconds(total) {
-  const seconds = Math.max(0, Math.round(Number(total) || 0));
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  const all = Math.max(0, Math.round(Number(total) || 0));
+  const hours = Math.floor(all / 3600);
+  const minutes = Math.floor((all % 3600) / 60);
+  const seconds = String(all % 60).padStart(2, "0");
+  if (hours) return `${hours}:${String(minutes).padStart(2, "0")}:${seconds}`;
+  return `${minutes}:${seconds}`;
 }
 
 const FLIP = [

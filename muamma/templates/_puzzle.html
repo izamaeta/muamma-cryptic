@@ -3,6 +3,11 @@
 {% set is_practice = puzzle.kind == "practice" %}
 {% set is_archive = puzzle.kind == "daily" and not streak_risk %}
 <section class="puzzle" data-puzzle-id="{{ puzzle.id }}" data-streak-risk="{{ 1 if streak_risk else 0 }}">
+  <div class="chips">
+    <span class="chip">{{ difficulty_label }}</span>
+    <span class="chip timer" data-elapsed="{{ elapsed }}" data-running="{{ 0 if finished else 1 }}" aria-label="Geçen süre">{{ elapsed | mmss }}</span>
+  </div>
+
   <p class="clue">
     <span class="clue-text">
       {%- if highlight -%}
