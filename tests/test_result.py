@@ -134,8 +134,13 @@ def test_archive_result_replaces_the_streak_row(client):
     assert "result-streak" not in html
 
 
+def confirm_panel(html):
+    start = html.index('class="confirm"')
+    return html[start : html.index("</dialog>", start)]
+
+
 def confirm_note(html):
-    panel = html[html.index('class="confirm"') : html.index("</dialog>")]
+    panel = confirm_panel(html)
     start = panel.index('class="result-note"')
     return panel[start : panel.index("</p>", start)]
 
@@ -160,8 +165,7 @@ def test_archive_confirm_warns_about_the_puzzle(client):
 
 def test_confirm_offers_cancel_and_reveal(client):
     add_puzzle()
-    html = client.get("/").get_data(as_text=True)
-    panel = html[html.index('class="confirm"') : html.index("</dialog>")]
+    panel = confirm_panel(client.get("/").get_data(as_text=True))
 
     assert "Mührü açmak istediğine emin misin?" in panel
     assert '<button value="no" class="confirm-cancel" autofocus>Vazgeç</button>' in panel

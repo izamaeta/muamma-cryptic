@@ -42,7 +42,7 @@ def test_footer_keeps_its_links(client):
 def test_pages_have_canonical_and_share_tags(client):
     html = client.get("/nasil-oynanir").get_data(as_text=True)
     assert '<link rel="canonical" href="https://muamma.test/nasil-oynanir">' in html
-    assert '<meta property="og:title" content="Nasıl oynanır – Muamma">' in html
+    assert '<meta property="og:title" content="Muamma nasıl çözülür? Cryptic bulmaca rehberi">' in html
 
 
 def test_personal_pages_are_not_indexed(client):

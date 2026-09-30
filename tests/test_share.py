@@ -75,4 +75,4 @@ def test_new_visitor_sees_intro(client):
 def test_how_to_play_page(client):
     html = client.get("/nasil-oynanir").get_data(as_text=True)
     assert "Anagram" in html
-    assert "Nasıl oynanır – Muamma" in html
+    assert "Muamma nasıl çözülür?" in html
