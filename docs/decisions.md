@@ -587,6 +587,42 @@ The other game's name appears only in descriptions of it, never as a
 product name of ours, and the page closes by stating that Muamma is not
 affiliated with it and that the name and brand belong to their owners.
 
+**Removed.** The page is gone, and with it the route, the template, the
+sitemap entry and the footer link; the address now answers 404. Whatever
+the page was worth in search, we would rather not talk about another
+product on our own site. The name appears nowhere on it any more, and a
+test walks the pages to keep it that way.
+
+## "Muamma nedir?" page
+
+The story of the name moved out of the guide and onto its own page, which
+also explains what the game is and how its week runs. The guide now points
+at it in one line: the guide is for learning to solve, and a history
+lesson in the middle of it was in the way.
+
+Its text lives in the template rather than in a data module like
+`muamma/guide.py`. That module exists because two views, the guide page
+and the glossary, have to render the same content and must not drift; this
+page has one reader, and its prose and layout are written together.
+
+The glossary button was taken off the day's puzzle at the same time. On
+practice and archive puzzles a list of indicators is a study aid; on the
+one puzzle everybody solves together it is a crib sheet.
+
+The page later lost its "what we care about" and FAQ sections. Both said
+again, in marketing voice, what the privacy page already says plainly and
+has to keep saying to stay accurate; two places telling the same story is
+one place too many to keep true. With the FAQ went the only use of
+`CONTACT_EMAIL` on this page, so the route stopped passing it — the
+address now appears on the privacy page alone, where deletion requests
+belong.
+
+The privacy page dropped its own opening section for the same reason: it
+described the cookie that the cookie section describes. The facts that
+only lived there — that the player id is made on the first guess, that it
+remembers the streak and the stats, and that it holds nothing about the
+player — moved into the cookie section rather than being lost.
+
 ## Privacy page
 
 The privacy page describes what the code actually stores: one session
