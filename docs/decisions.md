@@ -263,6 +263,162 @@ The sitemap lists every archive puzzle with
 is visible to crawlers. `updated_at` is stored in UTC and its date is used
 as it is; a few hours of drift does not matter for a lastmod.
 
+## Solve time
+
+The time shown after a puzzle is the distance between opening the page and
+finishing it. The open time is written to the session cookie when a puzzle
+page is rendered, never to the database, so a page view still creates no
+rows; crawlers keep no cookies and simply fall back to the play record's
+own start. Only the last three puzzles are kept in the cookie, and a value
+older than a day or set in the future is ignored.
+
+The play row is created on the first action, so without the cookie the
+clock starts there: solving with the first guess then reads as a few
+seconds rather than the time spent thinking.
+
+`started_at` and `finished_at` are compared after both are coerced to UTC,
+because SQLite hands back naive datetimes while PostgreSQL keeps the
+offset.
+
+## Seal geometry
+
+The seal is `min(150vw, 1400px)`: one declaration rather than a base value
+plus a desktop override, so nothing depends on which rule wins.
+
+The label and title must sit on the seal's flat body, never on the toothed
+rim. In the drawing the flat body ends at radius 249 of a 600 unit box and
+the teeth reach 296.4, so the body's top edge is `0.085 × diameter` below
+the seal's top. A fixed `rem` offset cannot track that, because the edge
+moves down as the seal grows; the cap is therefore placed at
+`--cap-offset × --seal-size` below the seal top. The chord of a circle is
+narrowest at the top of a text box and widens below it, so fitting the
+first line inside the body keeps the whole block inside.
+
+The teeth are not outside the body: they are circles of radius 34.2
+centred at radius 262.2, so they reach inwards to 228, well inside the
+body's own 249. The safe radius for text is therefore 228, not 249, and an
+earlier version that kept the text inside 249 was already clipping the
+rim.
+
+The band height follows from the same numbers rather than being a fixed
+figure: seal top, plus the cap offset, plus room for the text and the
+card's overlap. It is computed from the sealed seal position only, so
+breaking the seal does not resize the band mid-animation.
+
+What bounds the sizes is not the drawing but the fold: on a 390x844 phone
+and a 1366x768 laptop the clue, the tiles and the assist buttons have to
+be visible without scrolling, and the Turkish keyboard still has to fit
+underneath. Because the text's required depth grows with the seal, a
+larger seal costs band height directly, so the seal is capped at 1100px
+and drops to 900px from 1024px up, where the viewport is usually shortest.
+
+Measured in a browser: the label and title glyphs stay at or below 0.892
+of the body radius, inside the 0.916 where the teeth begin, and clear the
+card by 13 to 17px. The assist buttons end 246px above the fold on the
+phone and 67px above it on the laptop; the keyboard will take the text
+input's place, which returns about 60px more.
+
+## Stacking order
+
+The band does not create a stacking context, so its layers and the card
+are ordered in one place: band wash and seal at 0, the date and the seal
+cap at 1, the page container at 2, the header at 3 and the menu panel
+at 4. The card has to be above the seal, since it overlaps the band, while
+the header and its menu have to be above the card, since the menu opens
+downwards over it. Giving the band its own stacking context would force a
+choice between those two.
+
+## Result window
+
+The window is a native `<dialog>` opened with `showModal()`, which gives
+Esc, the focus trap and focus restoration without code; the close button
+is a `<form method="dialog">` submit, so it works even if the module fails
+to load. A click whose target is the dialog itself is a backdrop click and
+closes it.
+
+Revealing the answer asks first, in a dialog built from the same panel
+rather than the browser's `confirm()`, which cannot be styled and reads as
+a browser warning. The buttons are a `<form method="dialog">` submit each,
+so the choice arrives as `returnValue`: Esc and a backdrop click leave it
+empty and therefore count as cancelling, and focus starts on "Vazgeç". The
+note names the real cost, which differs by puzzle: the daily puzzle
+resets the streak, while a practice or archive puzzle only stops counting
+as solved.
+
+The lock that holds the controls during the solve scene is scoped to the
+guess form and the assist buttons. It once covered every button inside the
+card, which silently disabled the confirm dialog's own buttons while the
+scene flag was set.
+
+It opens by itself only when the puzzle is finished in front of the
+player. A finished puzzle's page is rendered with the numbers already in
+place and marked `data-ready="1"`, which turns on the "Sonucu göster"
+button instead, so a reload never replays the moment. Both paths write the
+same fields: the server from the play record, the client from the
+guess or reveal response, which now also carries guess, hint and letter
+counts.
+
+## Animation
+
+Only transform and opacity are animated, so the phone stays smooth. Three
+effects would naturally have been colour animations and were rebuilt:
+
+- The band's navy to turquoise change is a cross-fade. A `.band-wash`
+  layer painted with the sealed colour sits over the band background and
+  fades out while the state flips underneath. The seal itself swaps at
+  that instant rather than fading, since cross-fading it would mean
+  drawing it twice.
+- The definition highlight fills from the left by scaling a pseudo-element
+  on the X axis, not by animating a clip or a colour.
+- A wrong guess flashes a red ring drawn as a pseudo-element whose opacity
+  animates, leaving the tile's own border untouched.
+
+The solve scene runs about two seconds: tiles flip in turn, then the seal
+breaks while the band cross-fades, then the solution rises and the streak
+turns over. Revealing the answer plays the same scene without the tile
+flips. A single `busy` flag holds the whole scene, so a second click
+cannot start it or the window twice.
+
+`motionOk()` is checked in one place. Under
+`prefers-reduced-motion: reduce` nothing animates: the final state is
+applied at once and the window opens plainly. The stylesheet's global
+reduced-motion rule covers the CSS keyframes.
+
+The game script is split into `motion.js`, `result.js` and `game.js` and
+loaded as an ES module, which keeps the files small without any inline
+script; modules load from the same origin, so the CSP is unchanged.
+
+## Guess input
+
+The input accepts letters only and never more than the answer holds. The
+limit is rendered by the server as both `maxlength` and a data attribute,
+so it always matches the puzzle rather than a number kept in the client.
+Filtering happens on the `input` event, which also fires after a paste, so
+a pasted string is stripped and truncated like typing. None of this
+replaces the server's own length check; it only keeps the player from
+typing something that could not be right.
+
+A wrong guess shakes the tiles, flashes a red ring, and then drops the
+typed letters out of their tiles one after another before clearing the
+field. Focus stays in the input so the next attempt can start
+immediately. Revealed letters stay put, since they are not what was
+wrong.
+
+The letters sit in their own span inside each tile: animating the tile
+itself would drop the box out of the grid. Because a tile now always has
+a child, the fill styling moved from `:not(:empty)` to a class the
+template and the client both set. If the player types while the letters
+are still falling, the drop is cancelled first, so the new letters are not
+left invisible under a finished animation.
+
+## Wrong guesses
+
+Wrong guesses are read back from the event log for this player and puzzle,
+oldest first, so a reload restores them like every other piece of
+progress. The correct guess is filtered out in Python rather than with a
+JSON query, to stay portable across SQLite and PostgreSQL over what is a
+handful of rows per player and puzzle.
+
 ## Phone menu
 
 The header menu is a `<details>`/`<summary>` disclosure, not a scripted
