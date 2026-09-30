@@ -65,8 +65,7 @@ def test_parts_carry_a_label_next_to_their_colour(guide_html):
     assert 'class="role role-malzeme"' in guide_html
 
 
-def test_glossary_is_on_every_game_page(client):
-    daily = add_puzzle()
+def test_glossary_is_on_practice_and_archive(client):
     practice = add_puzzle(kind="practice", publish_date=None)
     archive = add_puzzle(
         publish_date=TODAY.replace(day=TODAY.day - 1),
@@ -75,22 +74,26 @@ def test_glossary_is_on_every_game_page(client):
         definition="ağaç",
     )
 
-    paths = [
-        "/",
+    for path in (
         f"/tadimlik/{practice.id}",
         f"/bulmaca/{archive.publish_date.isoformat()}",
-    ]
-    assert daily.id
-    for path in paths:
+    ):
         html = client.get(path).get_data(as_text=True)
         assert 'class="glossary"' in html, path
         assert 'class="glossary-open"' in html, path
-        assert "js/glossary.js" in html, path
+
+
+def test_glossary_stays_out_of_the_daily_puzzle(client):
+    add_puzzle()
+    html = client.get("/").get_data(as_text=True)
+
+    assert 'class="glossary-open"' not in html
+    assert 'class="glossary"' not in html
 
 
 def test_glossary_lists_every_indicator(client):
-    add_puzzle()
-    html = client.get("/").get_data(as_text=True)
+    puzzle = add_puzzle(kind="practice", publish_date=None)
+    html = client.get(f"/tadimlik/{puzzle.id}").get_data(as_text=True)
     window = html[html.index('class="glossary"') : html.index("</dialog>")]
 
     for word in all_indicators():
