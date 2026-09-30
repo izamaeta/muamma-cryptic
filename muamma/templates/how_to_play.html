@@ -109,6 +109,12 @@
                   <p class="example-solution">{{ kind.example.solution }} → <strong>{{ kind.example.answer }}</strong></p>
                 </div>
               {% endif %}
+
+              {% if kind.technique in practice_techniques %}
+                <p class="type-practice">
+                  <a href="{{ url_for('main.practice_random', teknik=kind.technique) }}">Bu türden bir tadımlık çöz</a>
+                </p>
+              {% endif %}
             </details>
           {% endfor %}
         </section>

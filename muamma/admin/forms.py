@@ -13,14 +13,20 @@ from wtforms.validators import DataRequired, Length, Optional, Regexp
 TECHNIQUES = [
     ("anagram", "Anagram"),
     ("hidden", "Gizli kelime"),
-    ("homophone", "Sesteş"),
+    ("initials", "Baş, son ve orta harfler"),
+    ("reversal", "Ters çevirme"),
+    ("synonym", "Eşanlamlılar"),
     ("charade", "Birleştirme"),
     ("container", "İç içe"),
     ("deletion", "Harf atma"),
-    ("reversal", "Ters çevirme"),
+    ("abbreviation", "Kısaltmalar"),
     ("double_definition", "Çift tanım"),
-    ("cryptic_definition", "Cryptic tanım"),
     ("andlit", "&lit"),
+    ("visual", "Görsel ipuçları"),
+    ("foreign", "Yabancı kelimeler"),
+    ("letter_names", "Harf adları"),
+    ("homophone", "Sesteş"),
+    ("cryptic_definition", "Cryptic tanım"),
     ("other", "Diğer"),
 ]
 

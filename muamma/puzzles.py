@@ -54,6 +54,17 @@ def archive_neighbours(day: date, today: date) -> tuple[Puzzle | None, Puzzle | 
     return previous, following
 
 
+def practice_techniques() -> set[str]:
+    """Techniques that have at least one ready practice puzzle."""
+    return set(
+        db.session.scalars(
+            select(Puzzle.technique)
+            .where(Puzzle.kind == "practice", Puzzle.status == "ready")
+            .distinct()
+        )
+    )
+
+
 def is_sunday_puzzle(puzzle: Puzzle) -> bool:
     """Daily puzzles published on a Sunday are the week's hard one."""
     return (

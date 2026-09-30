@@ -96,9 +96,15 @@ def finish_play(play: Play, status: str, today: date) -> None:
     elif status == "revealed" and on_its_day:
         play.player.current_streak = 0
 
-def random_practice_id(player: Player | None) -> int | None:
-    """Random ready practice puzzle the player has not finished."""
+def random_practice_id(player: Player | None, technique: str | None = None) -> int | None:
+    """Random ready practice puzzle the player has not finished.
+
+    An unknown technique simply matches nothing, so the caller can fall
+    back without keeping a list of valid values in step.
+    """
     query = select(Puzzle.id).where(Puzzle.kind == "practice", Puzzle.status == "ready")
+    if technique:
+        query = query.where(Puzzle.technique == technique)
     if player is not None:
         finished = select(Play.puzzle_id).where(
             Play.player_id == player.id, Play.status != "in_progress"

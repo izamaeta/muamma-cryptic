@@ -22,6 +22,7 @@ from muamma.puzzles import (
     archive_puzzles,
     daily_puzzle_for,
     is_playable,
+    practice_techniques,
     puzzle_view,
 )
 from muamma.timing import mark_opened
@@ -66,7 +67,12 @@ def index():
 
 @bp.get("/tadimlik")
 def practice_random():
-    puzzle_id = random_practice_id(current_player())
+    player = current_player()
+    wanted = request.args.get("teknik")
+
+    puzzle_id = random_practice_id(player, wanted)
+    if puzzle_id is None and wanted:
+        puzzle_id = random_practice_id(player)
     if puzzle_id is None:
         return render_template("practice_done.html")
     return redirect(url_for("main.practice", puzzle_id=puzzle_id))
@@ -141,7 +147,7 @@ def stats():
 
 @bp.get("/nasil-oynanir")
 def how_to_play():
-    return render_template("how_to_play.html")
+    return render_template("how_to_play.html", practice_techniques=practice_techniques())
 
 
 

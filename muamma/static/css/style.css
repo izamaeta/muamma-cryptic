@@ -1664,6 +1664,25 @@ button.primary:hover {
   cursor: pointer;
 }
 
+.type-practice {
+  margin: 0.75rem 0 0;
+}
+
+.type-practice a {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid var(--card-border);
+  border-radius: 999px;
+}
+
+.type-practice a:hover {
+  border-color: var(--turquoise-deep);
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;

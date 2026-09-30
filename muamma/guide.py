@@ -74,6 +74,7 @@ GROUPS = [
         "types": [
             {
                 "key": "anagram",
+                "technique": "anagram",
                 "name": "Anagram",
                 "summary": "Malzemenin harfleri karıştırılarak cevap kurulur.",
                 "indicators": [
@@ -108,6 +109,7 @@ GROUPS = [
             },
             {
                 "key": "gizli",
+                "technique": "hidden",
                 "name": "Gizli kelime",
                 "summary": (
                     "Cevap, ipucundaki bir ya da birkaç kelimenin içinde harfi "
@@ -141,6 +143,7 @@ GROUPS = [
             },
             {
                 "key": "harfler",
+                "technique": "initials",
                 "name": "Baş, son ve orta harfler",
                 "summary": (
                     "Kelimelerin tamamı değil, sadece ilk harfleri, son harfleri ya "
@@ -174,6 +177,7 @@ GROUPS = [
             },
             {
                 "key": "ters",
+                "technique": "reversal",
                 "name": "Ters çevirme",
                 "summary": "Malzeme tersten okunur.",
                 "indicators": ["geri dönünce", "tersten", "dönen", "aynada", "geriye"],
@@ -207,7 +211,41 @@ GROUPS = [
         ),
         "types": [
             {
+                "key": "esanlam",
+                "technique": "synonym",
+                "name": "Eşanlamlılar",
+                "summary": (
+                    "Kelime oyunundaki parçalar çoğu zaman harfi harfine değil, "
+                    "anlamıyla kullanılır: ipucundaki kelimenin yerine eşanlamlısını "
+                    "ya da kısa bir karşılığını koyarsın. Bu türün ayrı bir göstergesi "
+                    "yoktur; parçanın kendisi küçük bir tanımdır."
+                ),
+                "indicators": [],
+                "example": {
+                    "clue": [
+                        _run("Ateş", MALZEME),
+                        _run(" "),
+                        _run("ile", GOSTERGE),
+                        _run(" "),
+                        _run("beyaz", MALZEME),
+                        _run(", "),
+                        _run("bir merkez", TANIM),
+                        _run(" oluşturur"),
+                    ],
+                    "enumeration": "4",
+                    "parts": [
+                        ("parça 1", MALZEME, "Ateş → OD"),
+                        ("parça 2", MALZEME, "beyaz → AK"),
+                        (GOSTERGE, GOSTERGE, "ile"),
+                        (TANIM, TANIM, "bir merkez"),
+                    ],
+                    "solution": "OD + AK",
+                    "answer": "ODAK",
+                },
+            },
+            {
                 "key": "birlestirme",
+                "technique": "charade",
                 "name": "Birleştirme",
                 "summary": "Küçük parçalar yan yana gelerek cevabı oluşturur.",
                 "indicators": ["ile", "yan yana", "ardından", "peşinden", "eklenince"],
@@ -234,6 +272,7 @@ GROUPS = [
             },
             {
                 "key": "icice",
+                "technique": "container",
                 "name": "İç içe",
                 "summary": "Bir parça diğerinin içine girer.",
                 "indicators": [
@@ -266,6 +305,7 @@ GROUPS = [
             },
             {
                 "key": "harfatma",
+                "technique": "deletion",
                 "name": "Harf atma",
                 "summary": "Bir kelimeden harf düşer.",
                 "indicators": [
@@ -297,6 +337,7 @@ GROUPS = [
             },
             {
                 "key": "kisaltma",
+                "technique": "abbreviation",
                 "name": "Kısaltmalar",
                 "summary": (
                     "Bazı kelimeler ipucunda tek bir harfin yerine geçer. Muamma'da "
@@ -319,6 +360,7 @@ GROUPS = [
         "types": [
             {
                 "key": "cift",
+                "technique": "double_definition",
                 "name": "Çift tanım",
                 "summary": (
                     "Harf oyunu yoktur; ipucu, aynı kelimenin iki farklı anlamını yan "
@@ -343,6 +385,7 @@ GROUPS = [
             },
             {
                 "key": "hepsi",
+                "technique": "andlit",
                 "name": "Hepsi bir arada",
                 "summary": (
                     "İpucunun tamamı hem tanım hem de kelime oyunudur; ikisi "
@@ -355,8 +398,13 @@ GROUPS = [
             },
             {
                 "key": "gorsel",
+                "technique": "visual",
                 "name": "Görsel ipuçları",
-                "summary": "Bazen ipucu bir şakadır; harflerin kendisine bakmak gerekir.",
+                "summary": (
+                    "Bazen ipucu bir şakadır; harflerin kendisine bakmak gerekir. "
+                    "Bazen rakamlar harfin yerine geçer, çünkü birbirlerine benzerler: "
+                    "0 bir O, 1 bir I olabilir."
+                ),
                 "indicators": [],
                 "example": {
                     "clue": [_run("HIİJKLMNO")],
@@ -364,6 +412,69 @@ GROUPS = [
                     "parts": [],
                     "solution": "Harfler H'den O'ya: H₂O",
                     "answer": "SU",
+                },
+            },
+            {
+                "key": "yabanci",
+                "technique": "foreign",
+                "name": "Yabancı kelimeler",
+                "summary": (
+                    "Parçalardan biri başka bir dilden gelir; ipucu hangi dil olduğunu "
+                    "söyler."
+                ),
+                "indicators": ["Fransız", "İngiliz", "Alman", "İtalyan", "yabancı"],
+                "example": {
+                    "clue": [
+                        _run("Fransız dişi", MALZEME),
+                        _run(" ile "),
+                        _run("erkek", MALZEME),
+                        _run(" "),
+                        _run("yan yana", GOSTERGE),
+                        _run(", "),
+                        _run("bir çiçek", TANIM),
+                    ],
+                    "enumeration": "4",
+                    "parts": [
+                        ("parça 1", MALZEME, "Fransız dişi → LA"),
+                        ("parça 2", MALZEME, "erkek → LE"),
+                        (GOSTERGE, GOSTERGE, "yan yana"),
+                        (TANIM, TANIM, "bir çiçek"),
+                    ],
+                    "solution": "LA + LE",
+                    "answer": "LALE",
+                },
+            },
+            {
+                "key": "harfadlari",
+                "technique": "letter_names",
+                "name": "Harf adları",
+                "summary": (
+                    "Türkçe yazıldığı gibi okunduğu için başka dillerdeki sesteş "
+                    "oyunları burada nadirdir. Onların Türkçedeki karşılığı harflerin "
+                    "okunuşudur: D “de”, V “ve”, S “se” diye okunur."
+                ),
+                "indicators": [
+                    "duyulduğu gibi",
+                    "okunuşuyla",
+                    "sesli söylenen",
+                    "kulağa gelen",
+                ],
+                "example": {
+                    "clue": [
+                        _run("Duyulduğu gibi", GOSTERGE),
+                        _run(" "),
+                        _run("D ile V", MALZEME),
+                        _run(", "),
+                        _run("çölün gemisi", TANIM),
+                    ],
+                    "enumeration": "4",
+                    "parts": [
+                        (GOSTERGE, GOSTERGE, "Duyulduğu gibi"),
+                        (MALZEME, MALZEME, "D ile V"),
+                        (TANIM, TANIM, "çölün gemisi"),
+                    ],
+                    "solution": "“de” + “ve”",
+                    "answer": "DEVE",
                 },
             },
         ],
