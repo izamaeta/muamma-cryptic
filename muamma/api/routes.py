@@ -60,6 +60,9 @@ def _solution(puzzle, play, player, today):
         "explanation": puzzle.explanation,
         "streak": streak,
         "highlight": clue_parts(puzzle),
+        "guesses": play.guess_count,
+        "hints": play.hints_used,
+        "letters": play.letters_revealed,
         **finish_details(puzzle, play, streak, today),
     }
 

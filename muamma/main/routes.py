@@ -25,6 +25,7 @@ from muamma.puzzles import (
     puzzle_view,
 )
 from muamma.stats import player_stats
+from muamma.timing import mark_opened
 
 ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
@@ -59,6 +60,7 @@ def index():
 
     context = {"puzzle": None, "new_visitor": player is None}
     if puzzle is not None:
+        mark_opened(puzzle.id)
         context.update(puzzle_view(puzzle, get_play(player, puzzle), today))
     return render_template("index.html", **context)
 
@@ -77,6 +79,7 @@ def practice(puzzle_id):
     puzzle = db.session.get(Puzzle, puzzle_id)
     if puzzle is None or puzzle.kind != "practice" or not is_playable(puzzle, today):
         abort(404)
+    mark_opened(puzzle.id)
     play = get_play(current_player(), puzzle)
     return render_template("practice.html", **puzzle_view(puzzle, play, today))
 
@@ -115,6 +118,7 @@ def archive_puzzle(day):
     if puzzle is None:
         abort(404)
 
+    mark_opened(puzzle.id)
     previous, following = archive_neighbours(published_on, today)
     play = get_play(current_player(), puzzle)
     return render_template(
