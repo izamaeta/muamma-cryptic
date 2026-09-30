@@ -428,6 +428,56 @@ A finished puzzle's page renders the final figure with the counter already
 stopped. Both sides format the same way: `dk:sn`, or `sa:dk:sn` past an
 hour.
 
+## Community line
+
+The result window carries one line about everyone who solved the puzzle:
+the mean guess count and the median time. The mean is the fair summary of
+guesses, but time needs the median, because a player who leaves the tab
+open for an afternoon would drag an average far past anything a person
+recognises.
+
+Fewer than twenty solvers and the line is left out rather than shown with
+a caveat; a handful of people is not a crowd. No solve percentage is
+shown: it reads as a grade on the player rather than a fact about the
+puzzle.
+
+Only solved plays count. Revealed answers say nothing about how long
+solving takes, and unfinished plays have no time at all.
+
+The figures are cached per puzzle for five minutes in the Redis the rate
+limiter already uses, so no new service or setting appears. Without Redis
+the numbers are simply computed, and any Redis error falls back the same
+way — the same rule as rate limits, where an outage must not take the
+site down. The line itself is built outside the cache, so the daily
+puzzle's wording switches from "Bugün çözenler" the moment its day ends.
+
+The median is computed in Python. `percentile_cont` would push it into the
+database, but it is PostgreSQL-only and the tests run on SQLite.
+
+## The week's hard puzzle
+
+A daily puzzle published on a Sunday is the week's hard one. Nothing is
+stored for this: the rule reads the publish date, so no column, no
+migration, and no way for the flag to disagree with the calendar.
+
+The admin dashboard marks Sundays and warns about any Sunday in the next
+two weeks that is empty or not set to "Zor". Saving an easy Sunday puzzle
+is still allowed and only adds a notice: the warning is about planning the
+schedule, and blocking the save would stop an editor fixing a typo on a
+puzzle whose difficulty someone else has to decide.
+
+## Stats in a window
+
+The stats page became a dialog opened from the header and the phone menu,
+built from the same panel as the result window, so a player checking their
+streak no longer leaves the puzzle. The numbers arrive from `/api/me/stats`
+when the window opens rather than being rendered into every page, which
+keeps them off pages that do not need them, and reading them creates no
+player row.
+
+`/istatistik` answers 301 to the home page, since the address has been
+linked and indexed.
+
 ## Dropped features
 
 The Turkish on-screen keyboard, the indicator and fodder highlights with
