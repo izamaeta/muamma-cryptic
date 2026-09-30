@@ -1,4 +1,5 @@
 import unicodedata
+from datetime import date
 
 _TURKISH_UPPER = str.maketrans(
     {
@@ -22,3 +23,24 @@ def normalize_answer(value: str) -> str:
     """Uppercase with Turkish casing rules and keep letters only."""
     value = unicodedata.normalize("NFC", value)
     return "".join(ch for ch in turkish_upper(value) if ch.isalpha())
+
+
+_TURKISH_MONTHS = (
+    "Ocak",
+    "Şubat",
+    "Mart",
+    "Nisan",
+    "Mayıs",
+    "Haziran",
+    "Temmuz",
+    "Ağustos",
+    "Eylül",
+    "Ekim",
+    "Kasım",
+    "Aralık",
+)
+
+
+def turkish_long_date(value: date) -> str:
+    """Day, Turkish month name and year, as in 29 Eylül 2026."""
+    return f"{value.day} {_TURKISH_MONTHS[value.month - 1]} {value.year}"

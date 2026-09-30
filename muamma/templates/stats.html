@@ -4,17 +4,23 @@
 {% block robots %}noindex, follow{% endblock %}
 
 {% block content %}
-  <h1>İstatistiklerin</h1>
   {% if stats %}
-    <dl class="stats">
-      <dt>Oynanan günlük bulmaca</dt><dd>{{ stats.daily_played }}</dd>
-      <dt>Çözülen</dt><dd>{{ stats.daily_solved }}</dd>
-      <dt>Çözme oranı</dt><dd>%{{ stats.solve_rate }}</dd>
-      <dt>Mevcut seri</dt><dd>{{ stats.current_streak }}</dd>
-      <dt>En uzun seri</dt><dd>{{ stats.max_streak }}</dd>
-      <dt>Çözülen tadımlık</dt><dd>{{ stats.practice_solved }}</dd>
-    </dl>
+    <h1>İstatistiklerin</h1>
+    <div class="panel">
+      <dl class="stats">
+        <dt>Oynanan günlük bulmaca</dt><dd>{{ stats.daily_played }}</dd>
+        <dt>Çözülen</dt><dd>{{ stats.daily_solved }}</dd>
+        <dt>Çözme oranı</dt><dd>%{{ stats.solve_rate }}</dd>
+        <dt>Mevcut seri</dt><dd>{{ stats.current_streak }}</dd>
+        <dt>En uzun seri</dt><dd>{{ stats.max_streak }}</dd>
+        <dt>Çözülen tadımlık</dt><dd>{{ stats.practice_solved }}</dd>
+      </dl>
+    </div>
   {% else %}
-    <p>Henüz bir bulmaca oynamadın. <a href="{{ url_for('main.index') }}">Günün bulmacasıyla</a> başla.</p>
+    <div class="panel empty-state">
+      <img src="{{ url_for('static', filename='img/logo/logo-192.png') }}" width="192" height="192" alt="Muamma">
+      <h1>İstatistiklerin</h1>
+      <p>Henüz bir bulmaca oynamadın. <a href="{{ url_for('main.index') }}">Günün bulmacasıyla</a> başla.</p>
+    </div>
   {% endif %}
 {% endblock %}

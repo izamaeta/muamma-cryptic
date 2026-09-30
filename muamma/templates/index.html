@@ -1,14 +1,25 @@
 {% extends "base.html" %}
 
+{% block body_class %}has-band{% endblock %}
+{% block state %}{{ "opened" if play and play.status != "in_progress" else "sealed" }}{% endblock %}
+
+{% block band %}
+  {% set band_title = "Bugünün muamması" %}
+  {% set band_date = puzzle.publish_date if puzzle else today %}
+  {% include "partials/_band.html" %}
+{% endblock %}
+
 {% block content %}
-  <h1>Günün bulmacası</h1>
-  {% if new_visitor %}
-    <p class="intro">Cryptic bulmacada ilk kez mi? <a href="{{ url_for('main.how_to_play') }}">Nasıl oynandığına</a> bir göz at.</p>
-  {% endif %}
   {% if puzzle %}
     {% include "_puzzle.html" %}
+    {% if new_visitor %}
+      <p class="intro">Cryptic bulmacada ilk kez mi? <a href="{{ url_for('main.how_to_play') }}">Nasıl oynandığına</a> bir göz at.</p>
+    {% endif %}
   {% else %}
-    <p>Bugünün bulmacası hazırlanıyor. Bu arada bir <a href="{{ url_for('main.practice_random') }}">tadımlık</a> çözebilirsin.</p>
+    <div class="panel empty-state">
+      <img src="{{ url_for('static', filename='img/logo/logo-192.png') }}" width="192" height="192" alt="Muamma">
+      <p>Bugünün bulmacası hazırlanıyor. Bu arada bir <a href="{{ url_for('main.practice_random') }}">tadımlık</a> çözebilirsin.</p>
+    </div>
   {% endif %}
 {% endblock %}
 

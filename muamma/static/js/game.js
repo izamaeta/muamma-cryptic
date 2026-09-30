@@ -14,6 +14,8 @@ if (section) {
   const streak = document.querySelector(".streak-count");
   const shareButton = section.querySelector(".share-button");
   const countdown = section.querySelector(".countdown");
+  const sealCap = document.querySelector(".seal-cap");
+  const sealLabel = document.querySelector(".seal-label");
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
   const messages = {
@@ -30,8 +32,14 @@ if (section) {
   function renderTiles() {
     const typed = lettersOf(input.value);
     tiles.forEach((tile, i) => {
+      const before = tile.textContent;
       tile.textContent = typed[i] ?? tile.dataset.given;
       tile.classList.toggle("given", !typed[i] && Boolean(tile.dataset.given));
+      if (tile.textContent && tile.textContent !== before) {
+        tile.classList.remove("pop");
+        tile.offsetWidth;
+        tile.classList.add("pop");
+      }
     });
   }
 
@@ -59,7 +67,7 @@ if (section) {
     const tick = () => {
       const left = Math.max(0, Math.round((end - Date.now()) / 1000));
       if (left === 0) {
-        countdown.textContent = "Yeni bulmaca hazır, sayfayı yenile.";
+        countdown.textContent = "Yeni muamma hazır, sayfayı yenile.";
         return;
       }
       const pad = (n) => String(n).padStart(2, "0");
@@ -92,12 +100,32 @@ if (section) {
     return data;
   }
 
-  function showSolution(data, message) {
+  function breakSeal(solved) {
+    document.body.dataset.state = "opened";
+    if (sealLabel) {
+      sealLabel.textContent = solved ? "Mühür kırıldı" : "Mühür açıldı";
+    }
+    if (solved && sealCap && !sealCap.querySelector(".seal-note")) {
+      const note = document.createElement("p");
+      note.className = "seal-note";
+      note.textContent = "Muamma çözüldü!";
+      sealCap.append(note);
+    }
+  }
+
+  function showSolution(data, message, solved) {
     form.hidden = true;
     helpers.hidden = true;
     input.value = "";
     setGiven(lettersOf(data.answer));
     highlight(data.highlight);
+    breakSeal(solved);
+    if (solved) {
+      tiles.forEach((tile) => {
+        tile.classList.remove("given");
+        tile.classList.add("solved");
+      });
+    }
     feedback.textContent = message;
     solution.querySelector(".answer").textContent = data.answer;
     solution.querySelector(".explanation").textContent = data.explanation;
@@ -119,10 +147,14 @@ if (section) {
 
     if (!data.correct) {
       feedback.textContent = "Olmadı, tekrar dene.";
+      const group = section.querySelector(".tiles");
+      group.classList.remove("shake");
+      group.offsetWidth;
+      group.classList.add("shake");
       input.select();
       return;
     }
-    showSolution(data, "Doğru!");
+    showSolution(data, "Doğru!", true);
   });
 
   helpers.addEventListener("click", async (event) => {
@@ -145,11 +177,11 @@ if (section) {
     } else if (action === "reveal") {
       const warning =
         section.dataset.streakRisk === "1"
-          ? "Cevabı görürsen serin sıfırlanır. Emin misin?"
-          : "Cevabı görmek istediğine emin misin?";
+          ? "Mührü açarsan serin sıfırlanır. Emin misin?"
+          : "Mührü açmak istediğine emin misin?";
       if (!confirm(warning)) return;
       const data = await post("reveal");
-      if (data) showSolution(data, "Cevap:");
+      if (data) showSolution(data, "Cevap:", false);
     }
   });
 

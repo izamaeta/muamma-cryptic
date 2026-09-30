@@ -1,3 +1,6 @@
+import re
+from datetime import date
+
 from flask import (
     Response,
     abort,
@@ -10,12 +13,20 @@ from flask import (
 
 from muamma import clock
 from muamma.extensions import db
-from muamma.gameplay import get_play, random_practice_id
+from muamma.gameplay import get_play, play_status_by_puzzle, random_practice_id
 from muamma.main import bp
 from muamma.models import Puzzle
 from muamma.players import current_player
-from muamma.puzzles import daily_puzzle_for, is_playable, puzzle_view
+from muamma.puzzles import (
+    archive_neighbours,
+    archive_puzzles,
+    daily_puzzle_for,
+    is_playable,
+    puzzle_view,
+)
 from muamma.stats import player_stats
+
+ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 @bp.app_context_processor
@@ -24,6 +35,7 @@ def inject_globals():
     site_url = current_app.config["SITE_URL"]
     return {
         "streak": player.displayed_streak(clock.today()) if player else 0,
+        "today": clock.today(),
         "site_url": site_url,
         "canonical_url": site_url + request.path,
     }
@@ -69,6 +81,55 @@ def practice(puzzle_id):
     return render_template("practice.html", **puzzle_view(puzzle, play, today))
 
 
+def archive_date(raw: str) -> date:
+    """Only plain YYYY-MM-DD; other spellings ISO parsing allows are 404."""
+    if not ISO_DATE.fullmatch(raw):
+        abort(404)
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        abort(404)
+
+
+@bp.get("/arsiv")
+def archive():
+    today = clock.today()
+    return render_template(
+        "archive.html",
+        puzzles=archive_puzzles(today),
+        statuses=play_status_by_puzzle(current_player()),
+    )
+
+
+@bp.get("/bulmaca/<day>")
+def archive_puzzle(day):
+    today = clock.today()
+    published_on = archive_date(day)
+
+    if published_on == today:
+        return redirect(url_for("main.index"))
+    if published_on > today:
+        abort(404)
+
+    puzzle = daily_puzzle_for(published_on)
+    if puzzle is None:
+        abort(404)
+
+    previous, following = archive_neighbours(published_on, today)
+    play = get_play(current_player(), puzzle)
+    return render_template(
+        "archive_puzzle.html",
+        previous=previous,
+        following=following,
+        **puzzle_view(puzzle, play, today),
+    )
+
+
+@bp.get("/minute-cryptic-turkce")
+def minute_cryptic():
+    return render_template("minute_cryptic.html")
+
+
 @bp.get("/istatistik")
 def stats():
     player = current_player()
@@ -104,9 +165,19 @@ def sitemap():
     paths = [
         url_for("main.index"),
         url_for("main.how_to_play"),
+        url_for("main.archive"),
+        url_for("main.minute_cryptic"),
         url_for("main.privacy"),
     ]
-    body = render_template("sitemap.xml", urls=[site + path for path in paths])
+    urls = [{"loc": site + path} for path in paths]
+    urls += [
+        {
+            "loc": site + url_for("main.archive_puzzle", day=puzzle.publish_date.isoformat()),
+            "lastmod": max(puzzle.publish_date, puzzle.updated_at.date()),
+        }
+        for puzzle in archive_puzzles(clock.today())
+    ]
+    body = render_template("sitemap.xml", urls=urls)
     return Response(body, mimetype="application/xml")
 
 

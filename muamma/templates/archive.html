@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Arşiv – Muamma{% endblock %}
+{% block description %}Yayınlanmış bütün Türkçe cryptic muammalar. Geçmiş günlerin bulmacalarını tarihine göre seç ve çöz.{% endblock %}
+
+{% block content %}
+  <h1>Arşiv</h1>
+  {% if puzzles %}
+    <p class="intro">Geçmiş günlerin bulmacaları. Arşivden çözmek serini etkilemez.</p>
+    <div class="panel">
+      <ul class="archive-list">
+        {% for puzzle in puzzles %}
+          {% set status = statuses.get(puzzle.id) %}
+          <li>
+            <a href="{{ url_for('main.archive_puzzle', day=puzzle.publish_date.isoformat()) }}">{{ puzzle.publish_date | long_date }}</a>
+            {%- if status == "solved" %}
+              <span class="chip chip-solved">Çözüldü</span>
+            {%- elif status == "revealed" %}
+              <span class="chip">Cevaba bakıldı</span>
+            {%- endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="panel empty-state">
+      <img src="{{ url_for('static', filename='img/logo/logo-192.png') }}" width="192" height="192" alt="Muamma">
+      <p>Arşiv henüz boş. <a href="{{ url_for('main.index') }}">Günün bulmacasıyla</a> başla.</p>
+    </div>
+  {% endif %}
+{% endblock %}

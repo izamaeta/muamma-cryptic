@@ -17,6 +17,37 @@ def daily_puzzle_for(day: date) -> Puzzle | None:
     )
 
 
+def archive_puzzles(today: date) -> list[Puzzle]:
+    """Ready daily puzzles already published, newest first."""
+    return list(
+        db.session.scalars(
+            select(Puzzle)
+            .where(
+                Puzzle.kind == "daily",
+                Puzzle.status == "ready",
+                Puzzle.publish_date < today,
+            )
+            .order_by(Puzzle.publish_date.desc())
+        )
+    )
+
+
+def archive_neighbours(day: date, today: date) -> tuple[Puzzle | None, Puzzle | None]:
+    """Nearest published daily puzzles before and after a date."""
+    base = select(Puzzle).where(Puzzle.kind == "daily", Puzzle.status == "ready")
+    previous = db.session.scalar(
+        base.where(Puzzle.publish_date < day)
+        .order_by(Puzzle.publish_date.desc())
+        .limit(1)
+    )
+    following = db.session.scalar(
+        base.where(Puzzle.publish_date > day, Puzzle.publish_date <= today)
+        .order_by(Puzzle.publish_date)
+        .limit(1)
+    )
+    return previous, following
+
+
 def is_playable(puzzle: Puzzle, today: date) -> bool:
     """Ready puzzles only; daily puzzles only from their publish date on."""
     if puzzle.status != "ready":

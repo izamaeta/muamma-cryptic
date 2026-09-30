@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}{{ puzzle.publish_date | long_date }} muamması – Muamma{% endblock %}
+{% block description %}{{ puzzle.publish_date | long_date }} tarihli Türkçe cryptic bulmaca: {{ puzzle.clue }} ({{ puzzle.enumeration }}){% endblock %}
+{% block body_class %}has-band{% endblock %}
+{% block state %}{{ "opened" if play and play.status != "in_progress" else "sealed" }}{% endblock %}
+
+{% block band %}
+  {% set band_title = "Arşiv muamması" %}
+  {% set band_date = puzzle.publish_date %}
+  {% include "partials/_band.html" %}
+{% endblock %}
+
+{% block content %}
+  {% include "_puzzle.html" %}
+  <nav class="puzzle-nav">
+    {% if previous %}
+      <a href="{{ url_for('main.archive_puzzle', day=previous.publish_date.isoformat()) }}">← {{ previous.publish_date | long_date }}</a>
+    {% endif %}
+    {% if following %}
+      {% if following.publish_date == today %}
+        <a href="{{ url_for('main.index') }}">Bugünün bulmacası →</a>
+      {% else %}
+        <a href="{{ url_for('main.archive_puzzle', day=following.publish_date.isoformat()) }}">{{ following.publish_date | long_date }} →</a>
+      {% endif %}
+    {% endif %}
+  </nav>
+  <p class="intro"><a href="{{ url_for('main.archive') }}">Bütün arşiv</a></p>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
+{% endblock %}

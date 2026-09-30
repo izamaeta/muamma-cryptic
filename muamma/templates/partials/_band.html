@@ -1,0 +1,16 @@
+{% set status = play.status if play else none %}
+<p class="band-date">{{ (band_date or today) | long_date }}</p>
+<div class="seal-layer">
+  {% include "partials/_seal.html" %}
+  {% include "partials/_seal_broken.html" %}
+</div>
+<div class="seal-cap">
+  <p class="seal-label">
+    {%- if status == "solved" -%}Mühür kırıldı
+    {%- elif status == "revealed" -%}Mühür açıldı
+    {%- else -%}MÜHÜRLÜ
+    {%- endif -%}
+  </p>
+  <h1 class="seal-title">{{ band_title }}</h1>
+  {% if status == "solved" %}<p class="seal-note">Muamma çözüldü!</p>{% endif %}
+</div>

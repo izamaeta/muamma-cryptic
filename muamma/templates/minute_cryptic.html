@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Minute Cryptic Türkçe var mı? – Muamma{% endblock %}
+{% block description %}Minute Cryptic'in Türkçe bir sürümü yok. Türkçe günlük cryptic ipucu arıyorsan Muamma tam bunun için yapıldı.{% endblock %}
+
+{% block content %}
+  <article class="howto">
+    <h1>Minute Cryptic Türkçe var mı?</h1>
+    <p>Kısa cevap: yok. Minute Cryptic, günde bir İngilizce cryptic ipucu yayınlayan bir oyundur ve Türkçe bir sürümü bulunmuyor. Türkçe günlük bir cryptic ipucu arıyorsan aradığın şey Muamma.</p>
+
+    <h2>Muamma nedir?</h2>
+    <p>Muamma her gün tek bir Türkçe cryptic ipucu yayınlar. Tek bir cevap vardır; parantezdeki sayı harf sayısını gösterir. Tıkandığında ipucu isteyebilir, harf açabilir ya da mührü açıp cevabı görebilirsin. Üst üste çözdüğün günler serini büyütür.</p>
+    <p>Bugünün bulmacası <a href="{{ url_for('main.index') }}">ana sayfada</a>; geçmiş günler <a href="{{ url_for('main.archive') }}">arşivde</a>. Cryptic ipuçlarına yeniysen <a href="{{ url_for('main.how_to_play') }}">nasıl oynanır</a> sayfası kelime oyunu türlerini Türkçe örneklerle anlatıyor.</p>
+
+    <h2>Cryptic ipuçları neden çevrilemez?</h2>
+    <p>Cryptic ipucunun iki parçası vardır: bir tanım ve aynı cevaba götüren bir kelime oyunu. Kelime oyunu kelimenin harflerine dayanır, anlamına değil. Bu yüzden bir ipucu başka bir dile çevrildiğinde kelime oyunu dağılır.</p>
+    <div class="example">
+      <p class="example-clue">Karıncanın içinde saklanan <mark class="definition">bal yapıcı</mark> (3)</p>
+      <p>Cevap ARI: “karınca” kelimesinin içinde k-<strong>ARI</strong>-nca olarak saklıdır.</p>
+    </div>
+    <p>Aynı ipucunu İngilizceye çevirdiğinde “ant” kelimesinin içinde “bee” yoktur; ipucu anlamını korur ama oyunu kaybeder. Her dil kendi cryptic ipuçlarını kendi kelimeleriyle kurmak zorundadır. Bir oyunu başka dile taşımak da bu yüzden çeviri işi değil, sıfırdan yazma işidir.</p>
+
+    <h2>İsim nereden geliyor?</h2>
+    <p>Muamma, divan edebiyatında bir beytin içine harf oyunuyla saklanmış isim demekti. Okuyucu beyti düz anlamıyla okur, ustalığı fark eden ise harflerin arasından gizlenen adı çıkarırdı. Harf düşürmek, tersten okumak, parçaları birleştirmek: bugünün cryptic ipuçlarında kullanılan oyunların aynısı. Oyun adını buradan alıyor.</p>
+
+    <p class="disclaimer">Muamma, Minute Cryptic ile bağlantılı değildir. Minute Cryptic adı ve markası sahiplerine aittir.</p>
+  </article>
+{% endblock %}

@@ -206,6 +206,86 @@ defines its title and description once; the Open Graph tags reuse them.
 Personal or empty pages (stats, practice done, errors) are marked
 `noindex`. `robots.txt` keeps crawlers out of `/admin/` and `/api/`.
 
+## Interface foundation
+
+The visual language itself lives in docs/design.md; these are the
+implementation choices behind it.
+
+Page state is a `data-state` attribute on `<body>`, filled by a template
+block from the player's play record, so a solved or revealed puzzle still
+shows the opened palette after a reload. The theme is a separate
+`data-theme` attribute on `<html>`, which keeps the two independent.
+
+Both seals are rendered into the page and `data-state` decides which one
+is visible. Swapping the whole seal would mean building SVG in the client,
+and the crack is only a graphic, so it reveals nothing about the answer.
+The seals are inlined with `{% include %}` rather than `<img>` because
+their colours come from CSS variables.
+
+The provenance metadata the seal SVGs shipped with was removed: inlined
+into HTML it is no longer file metadata, and it added about 20 KB to every
+page render.
+
+`static/js/theme.js` is loaded in `<head>` without `defer` so the stored
+theme is applied before the first paint; the toggle is wired on
+`DOMContentLoaded`, since the button does not exist yet when the script
+runs. Every `localStorage` access is guarded, because private windows can
+throw. `theme-color` is declared as two media-scoped meta tags, so it
+follows the system theme without JavaScript; a manual override does not
+change the browser chrome.
+
+Favicons are PNG at 32 and 48 pixels instead of the old SVG, because the
+logo is a raster image.
+
+The phone header carries no text navigation, so "Tadımlık" was added to
+the footer to keep it reachable.
+
+## Archive and permanent puzzle pages
+
+`/arsiv` lists ready daily puzzles published before today, newest first.
+The player's labels come from one query that loads every play as a puzzle
+id to status map, so the list does not query per row. There is no paging
+yet; puzzles arrive one a day, so a single page stays reasonable for the
+first years.
+
+Each past puzzle has a permanent page at `/bulmaca/YYYY-MM-DD`. Only that
+plain spelling is accepted: `date.fromisoformat` also parses `20261009`
+and week dates, which would give the same puzzle several URLs. Today's
+date redirects to the home page for the same reason. Future dates and
+drafts are 404, matching the API.
+
+Solving from the archive does not touch the streak, because `finish_play`
+only counts a solve when the puzzle's publish date is today. No extra rule
+was needed.
+
+The sitemap lists every archive puzzle with
+`lastmod = max(publish_date, updated_at)`, so a typo fix on an old puzzle
+is visible to crawlers. `updated_at` is stored in UTC and its date is used
+as it is; a few hours of drift does not matter for a lastmod.
+
+## Phone menu
+
+The header menu is a `<details>`/`<summary>` disclosure, not a scripted
+dropdown: it is keyboard accessible, needs no JavaScript at all and so
+raises no CSP question. The panel would be cut off by the band, which
+clips the oversized seal, so the clipping moved to a `.seal-layer` inside
+the band instead of the band itself.
+
+The footer keeps the same links regardless, so every page is reachable
+without opening the menu.
+
+## Comparison page
+
+`/minute-cryptic-turkce` answers a question people actually search for.
+It states plainly that the other game is English-only and has no Turkish
+version, explains what Muamma is, and shows with a Turkish example why
+cryptic clues cannot be translated: the wordplay depends on the letters of
+the answer, so a translated clue keeps its meaning and loses its game.
+
+The other game's name appears only in descriptions of it, never as a
+product name of ours, and the page closes by stating that Muamma is not
+affiliated with it and that the name and brand belong to their owners.
+
 ## Privacy page
 
 The privacy page describes what the code actually stores: one session

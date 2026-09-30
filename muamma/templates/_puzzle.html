@@ -1,4 +1,5 @@
 {% set finished = play and play.status != "in_progress" %}
+{% set solved = play and play.status == "solved" %}
 <section class="puzzle" data-puzzle-id="{{ puzzle.id }}" data-streak-risk="{{ 1 if streak_risk else 0 }}">
   <p class="clue">
     <span class="clue-text">
@@ -15,16 +16,12 @@
     {% for group in tiles %}
       <div class="tile-group">
         {%- for letter in group -%}
-          <span class="tile{% if letter %} given{% endif %}" data-given="{{ letter }}">{{ letter }}</span>
+          <span class="tile{% if solved %} solved{% elif letter %} given{% endif %}" data-given="{{ letter }}">{{ letter }}</span>
         {%- endfor -%}
       </div>
     {% endfor %}
   </div>
   <p class="pattern visually-hidden">{{ pattern or "" }}</p>
-
-  <ol class="hints">
-    {% for hint in used_hints %}<li>{{ hint }}</li>{% endfor %}
-  </ol>
 
   <form class="guess-form" {% if finished %}hidden{% endif %}>
     <label class="visually-hidden" for="guess-{{ puzzle.id }}">Cevabın</label>
@@ -35,17 +32,21 @@
   <div class="helpers" {% if finished %}hidden{% endif %}>
     <button type="button" data-action="hint">İpucu</button>
     <button type="button" data-action="letter">Harf aç</button>
-    <button type="button" data-action="reveal">Cevabı göster</button>
+    <button type="button" data-action="reveal">Mührü aç</button>
   </div>
 
-  <p class="feedback" aria-live="polite">{% if play and play.status == "solved" %}Doğru!{% endif %}</p>
+  <ol class="hints">
+    {% for hint in used_hints %}<li>{{ hint }}</li>{% endfor %}
+  </ol>
+
+  <p class="feedback" aria-live="polite">{% if solved %}Doğru!{% endif %}</p>
 
   <div class="solution" {% if not finished %}hidden{% endif %}>
     <p class="answer">{% if finished %}{{ puzzle.answer }}{% endif %}</p>
     <p class="explanation">{% if finished %}{{ puzzle.explanation }}{% endif %}</p>
     <button type="button" class="primary share-button" data-share="{{ share or '' }}" {% if not share %}hidden{% endif %}>Sonucu paylaş</button>
     <p class="countdown" data-seconds="{{ next_in or '' }}" {% if not next_in %}hidden{% endif %}>
-      Yeni bulmacaya <span class="countdown-time"></span>
+      Yeni muammaya <span class="countdown-time"></span>
     </p>
   </div>
 </section>

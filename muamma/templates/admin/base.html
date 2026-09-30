@@ -5,25 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>{% block title %}Yönetim – Muamma{% endblock %}</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/logo/favicon-32.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 </head>
-<body>
-  <header class="site-header">
-    <a class="brand" href="{{ url_for('admin.dashboard') }}">Muamma yönetim</a>
-       <nav>
+<body class="admin" data-state="sealed">
+  <div class="band">
+    <header class="site-header">
+      <a class="brand" href="{{ url_for('admin.dashboard') }}">
+        <img src="{{ url_for('static', filename='img/logo/logo-96.png') }}" width="96" height="96" alt="Muamma">
+        <span class="wordmark">muamma</span>
+      </a>
+      <nav class="site-nav">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('admin.puzzles') }}">Bulmacalar</a>
+          <a href="{{ url_for('admin.puzzle_new', kind='daily') }}">Yeni günlük</a>
+          <a href="{{ url_for('admin.puzzle_new', kind='practice') }}">Yeni tadımlık</a>
+        {% endif %}
+      </nav>
       {% if current_user.is_authenticated %}
-        <a href="{{ url_for('admin.puzzles') }}">Bulmacalar</a>
-        <a href="{{ url_for('admin.puzzle_new', kind='daily') }}">Yeni günlük</a>
-        <a href="{{ url_for('admin.puzzle_new', kind='practice') }}">Yeni tadımlık</a>
+        <form method="post" action="{{ url_for('admin.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit">Çıkış</button>
+        </form>
       {% endif %}
-    </nav>
-    {% if current_user.is_authenticated %}
-      <form method="post" action="{{ url_for('admin.logout') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit">Çıkış</button>
-      </form>
-    {% endif %}
-  </header>
+    </header>
+  </div>
   <main class="container">
     {% for message in get_flashed_messages() %}
       <p class="flash">{{ message }}</p>

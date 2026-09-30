@@ -11,6 +11,33 @@ def test_sitemap_lists_pages(client):
     assert "<loc>https://muamma.test/nasil-oynanir</loc>" in response.get_data(as_text=True)
 
 
+def test_sitemap_lists_the_new_pages(client):
+    body = client.get("/sitemap.xml").get_data(as_text=True)
+    assert "<loc>https://muamma.test/arsiv</loc>" in body
+    assert "<loc>https://muamma.test/minute-cryptic-turkce</loc>" in body
+
+
+def test_comparison_page_is_honest_and_disclaims_the_brand(client):
+    html = client.get("/minute-cryptic-turkce").get_data(as_text=True)
+    assert "Türkçe bir sürümü bulunmuyor" in html
+    assert "Muamma, Minute Cryptic ile bağlantılı değildir." in html
+    assert "Minute Cryptic adı ve markası sahiplerine aittir." in html
+
+
+def test_phone_menu_holds_the_main_links(client):
+    html = client.get("/").get_data(as_text=True)
+    menu = html[html.index('class="nav-menu-panel"') : html.index("</details>")]
+    for target in ("/tadimlik", "/arsiv", "/istatistik", "/nasil-oynanir"):
+        assert f'href="{target}"' in menu
+
+
+def test_footer_keeps_its_links(client):
+    html = client.get("/").get_data(as_text=True)
+    footer = html[html.index('class="site-footer"') :]
+    for target in ("/tadimlik", "/arsiv", "/nasil-oynanir", "/minute-cryptic-turkce", "/gizlilik"):
+        assert f'href="{target}"' in footer
+
+
 def test_pages_have_canonical_and_share_tags(client):
     html = client.get("/nasil-oynanir").get_data(as_text=True)
     assert '<link rel="canonical" href="https://muamma.test/nasil-oynanir">' in html

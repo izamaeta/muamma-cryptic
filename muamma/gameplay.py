@@ -14,6 +14,16 @@ def get_play(player: Player | None, puzzle: Puzzle) -> Play | None:
     )
 
 
+def play_status_by_puzzle(player: Player | None) -> dict[int, str]:
+    """Every play of this player, as puzzle id to status, in one query."""
+    if player is None:
+        return {}
+    rows = db.session.execute(
+        select(Play.puzzle_id, Play.status).where(Play.player_id == player.id)
+    ).all()
+    return dict(rows)
+
+
 def get_or_create_play(player: Player, puzzle: Puzzle) -> Play:
     play = get_play(player, puzzle)
     if play is None:

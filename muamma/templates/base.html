@@ -17,30 +17,73 @@
   <meta property="og:image" content="{{ site_url }}{{ url_for('static', filename='img/og.png') }}">
   <meta name="twitter:card" content="summary_large_image">
 
-  <meta name="theme-color" content="#f7f3ea">
-  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0B1F5C">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#050C26">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/logo/favicon-32.png') }}">
+  <link rel="icon" type="image/png" sizes="48x48" href="{{ url_for('static', filename='img/logo/favicon-48.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo/apple-touch-icon.png') }}">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 </head>
-<body>
-  <header class="site-header">
-    <a class="brand" href="{{ url_for('main.index') }}">Muamma</a>
-    <nav>
-      <a href="{{ url_for('main.practice_random') }}">Tadımlık</a>
-      <a href="{{ url_for('main.stats') }}">İstatistik</a>
-      <a href="{{ url_for('main.how_to_play') }}">Nasıl oynanır</a>
-    </nav>
-    <p class="streak">Seri: <span class="streak-count">{{ streak }}</span></p>
-  </header>
+<body class="{% block body_class %}{% endblock %}" data-state="{% block state %}sealed{% endblock %}">
+  <div class="band">
+    <header class="site-header">
+      <details class="nav-menu">
+        <summary class="icon-button" aria-label="Menü">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </summary>
+        <nav class="nav-menu-panel">
+          <a href="{{ url_for('main.practice_random') }}">Tadımlık</a>
+          <a href="{{ url_for('main.archive') }}">Arşiv</a>
+          <a href="{{ url_for('main.stats') }}">İstatistik</a>
+          <a href="{{ url_for('main.how_to_play') }}">Nasıl oynanır</a>
+        </nav>
+      </details>
+      <nav class="site-nav">
+        <a href="{{ url_for('main.practice_random') }}"{% if request.path.startswith('/tadimlik') %} aria-current="page"{% endif %}>Tadımlık</a>
+        <a href="{{ url_for('main.archive') }}"{% if request.path == '/arsiv' or request.path.startswith('/bulmaca/') %} aria-current="page"{% endif %}>Arşiv</a>
+        <a href="{{ url_for('main.how_to_play') }}"{% if request.path == '/nasil-oynanir' %} aria-current="page"{% endif %}>Nasıl oynanır</a>
+      </nav>
+      <a class="brand" href="{{ url_for('main.index') }}">
+        <img src="{{ url_for('static', filename='img/logo/logo-96.png') }}"
+             srcset="{{ url_for('static', filename='img/logo/logo-96.png') }} 96w,
+                     {{ url_for('static', filename='img/logo/logo-192.png') }} 192w,
+                     {{ url_for('static', filename='img/logo/logo-384.png') }} 384w"
+             sizes="48px" width="96" height="96" alt="Muamma">
+        <span class="wordmark">muamma</span>
+      </a>
+      <div class="header-tools">
+        <p class="streak">Seri <span class="streak-count">{{ streak }}</span></p>
+        <a class="icon-button" href="{{ url_for('main.stats') }}" aria-label="İstatistiklerin">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
+          </svg>
+        </a>
+        <button type="button" class="icon-button theme-toggle" aria-label="Koyu temaya geç" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+    {% block band %}{% endblock %}
+  </div>
   <main class="container">
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer">
     <nav>
+      <a href="{{ url_for('main.practice_random') }}">Tadımlık</a>
+      <a href="{{ url_for('main.archive') }}">Arşiv</a>
       <a href="{{ url_for('main.how_to_play') }}">Nasıl oynanır</a>
+      <a href="{{ url_for('main.minute_cryptic') }}">Minute Cryptic Türkçe</a>
       <a href="{{ url_for('main.privacy') }}">Gizlilik</a>
     </nav>
-    <p>Muamma · Günlük Türkçe cryptic bulmaca</p>
+    <p>Her gece yarısı yeni bir muamma mühürlenir.</p>
   </footer>
   {% block scripts %}{% endblock %}
 </body>

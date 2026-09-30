@@ -4,6 +4,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from muamma.config import Config
 from muamma.extensions import csrf, db, limiter, login_manager, migrate
 from muamma.headers import apply_security_headers
+from muamma.text import turkish_long_date
 
 
 def create_app(config_class=Config):
@@ -25,6 +26,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     limiter.init_app(app)
     app.after_request(apply_security_headers)
+    app.add_template_filter(turkish_long_date, "long_date")
 
     from muamma import models  # noqa: F401
     from muamma.admin import bp as admin_bp
