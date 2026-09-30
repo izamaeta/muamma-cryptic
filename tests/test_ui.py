@@ -77,3 +77,17 @@ def test_pages_without_a_band_are_not_tall(client):
     html = client.get("/gizlilik").get_data(as_text=True)
     assert "has-band" not in html
     assert "seal-whole" not in html
+
+
+def test_input_limit_matches_the_answer_length(client):
+    add_puzzle()
+    html = client.get("/").get_data(as_text=True)
+    assert 'maxlength="3"' in html
+    assert 'data-letters="3"' in html
+
+
+def test_input_limit_counts_letters_not_words(client):
+    add_puzzle(answer="GÖK YÜZÜ", enumeration="3,4", clue="Mavi örtü", definition="Mavi örtü")
+    html = client.get("/").get_data(as_text=True)
+    assert 'maxlength="7"' in html
+    assert 'data-letters="7"' in html
