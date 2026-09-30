@@ -593,6 +593,30 @@ the page was worth in search, we would rather not talk about another
 product on our own site. The name appears nowhere on it any more, and a
 test walks the pages to keep it that way.
 
+## Practice by type
+
+Each guide type names the stored `technique` it corresponds to, on the
+type itself rather than in a separate mapping table. A second structure
+would be a second place to forget when a type is added.
+
+The guide asks the database once which techniques have a ready practice
+puzzle and only shows the button for those. It does not ask whether this
+player has finished them: the page would then differ per reader for no
+gain, and the redirect already copes with a player who has solved them
+all.
+
+`/tadimlik?teknik=` keeps no list of valid values. An unknown technique
+matches no row, so the query comes back empty and the route falls back to
+any practice puzzle. The same fallback covers a real technique whose
+puzzles the player has already finished, and there is no list to drift out
+of step with the guide.
+
+The admin's technique list gained the six types it was missing. The
+stored values of the existing ones are untouched, since puzzles carry them
+in the database. "Harf adları" was added next to the older "Sesteş"
+rather than replacing it: renaming a stored value would orphan the
+puzzles filed under it, and the two are not quite the same thing.
+
 ## "Muamma nedir?" page
 
 The story of the name moved out of the guide and onto its own page, which
