@@ -19,6 +19,8 @@ from muamma.admin.services import (
     STOCK_WARNING_DAYS,
     is_locked,
     lock_fields,
+    locked_ids,
+    publish_problem,
     save_puzzle,
     stock_days,
     sunday_gaps,
@@ -32,10 +34,21 @@ from muamma.security import check_login
 SESSION_KEY = "admin_since"
 
 
+BACK_PAGES = {"dashboard": "admin.dashboard", "puzzles": "admin.puzzles"}
+
+
 def _warn_about_sunday(puzzle):
     message = sunday_warning(puzzle)
     if message:
         flash(message)
+
+
+def _back_to(puzzle):
+    """Return to the page the button was pressed on, from a fixed list."""
+    target = request.form.get("back")
+    if target == "edit":
+        return redirect(url_for("admin.puzzle_edit", puzzle_id=puzzle.id))
+    return redirect(url_for(BACK_PAGES.get(target, "admin.puzzles")))
 
 
 @bp.before_request
@@ -88,12 +101,14 @@ def logout():
 def dashboard():
     today = clock.today()
     stock = stock_days(today)
+    calendar = upcoming(today)
     return render_template(
         "admin/dashboard.html",
         stock=stock,
         warning=stock < STOCK_WARNING_DAYS,
-        calendar=upcoming(today),
+        calendar=calendar,
         sundays=sunday_gaps(today),
+        locked=locked_ids([puzzle for _, puzzle in calendar if puzzle], today),
     )
 
 
@@ -116,8 +131,12 @@ def puzzles():
         query = query.where(Puzzle.kind == "daily", Puzzle.publish_date >= today)
         query = query.order_by(Puzzle.publish_date)
 
+    puzzles = db.session.scalars(query).all()
     return render_template(
-        "admin/puzzles.html", puzzles=db.session.scalars(query).all(), view=view
+        "admin/puzzles.html",
+        puzzles=puzzles,
+        view=view,
+        locked=locked_ids(puzzles, today),
     )
 
 
@@ -161,6 +180,43 @@ def puzzle_edit(puzzle_id):
     return render_template(
         "admin/puzzle_form.html", form=form, puzzle=puzzle, locked=locked
     )
+
+
+@bp.post("/puzzles/<int:puzzle_id>/publish")
+@login_required
+def puzzle_publish(puzzle_id):
+    puzzle = db.get_or_404(Puzzle, puzzle_id)
+
+    if puzzle.status != "draft":
+        flash("Bu bulmaca zaten yayında.")
+        return _back_to(puzzle)
+
+    problem = publish_problem(puzzle, clock.today())
+    if problem:
+        flash(problem)
+        return _back_to(puzzle)
+
+    puzzle.status = "ready"
+    db.session.commit()
+    flash("Bulmaca yayına alındı.")
+    _warn_about_sunday(puzzle)
+    return _back_to(puzzle)
+
+
+@bp.post("/puzzles/<int:puzzle_id>/unpublish")
+@login_required
+def puzzle_unpublish(puzzle_id):
+    puzzle = db.get_or_404(Puzzle, puzzle_id)
+
+    if is_locked(puzzle, clock.today()):
+        flash("Yayınlanmış ya da oynanmış bir bulmaca taslağa çekilemez.")
+    elif puzzle.status != "ready":
+        flash("Bu bulmaca zaten taslak.")
+    else:
+        puzzle.status = "draft"
+        db.session.commit()
+        flash("Bulmaca taslağa çekildi.")
+    return _back_to(puzzle)
 
 
 @bp.post("/puzzles/<int:puzzle_id>/delete")

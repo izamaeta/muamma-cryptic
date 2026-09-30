@@ -1,4 +1,5 @@
 {% extends "admin/base.html" %}
+{% from "admin/_status.html" import status_button %}
 
 {% block content %}
   <h1>Bulmacalar</h1>
@@ -14,6 +15,7 @@
         <td><a href="{{ url_for('admin.puzzle_edit', puzzle_id=puzzle.id) }}">{{ puzzle.clue }}</a></td>
         <td>{{ puzzle.answer }}</td>
         <td>{{ puzzle.technique }}</td>
+        <td>{{ status_button(puzzle, "puzzles", puzzle.id in locked) }}</td>
       </tr>
     {% else %}
       <tr><td>Bu listede bulmaca yok.</td></tr>

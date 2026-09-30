@@ -1,0 +1,15 @@
+{% macro status_button(puzzle, back, locked=False) %}
+  {% if puzzle.status == "draft" %}
+    <form method="post" action="{{ url_for('admin.puzzle_publish', puzzle_id=puzzle.id) }}" class="status-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="back" value="{{ back }}">
+      <button type="submit">Yayına al</button>
+    </form>
+  {% elif not locked %}
+    <form method="post" action="{{ url_for('admin.puzzle_unpublish', puzzle_id=puzzle.id) }}" class="status-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="back" value="{{ back }}">
+      <button type="submit">Taslağa çek</button>
+    </form>
+  {% endif %}
+{% endmacro %}

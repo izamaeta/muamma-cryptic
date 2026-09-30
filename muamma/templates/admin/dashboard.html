@@ -1,4 +1,5 @@
 {% extends "admin/base.html" %}
+{% from "admin/_status.html" import status_button %}
 
 {% block content %}
   <h1>Panel</h1>
@@ -30,6 +31,7 @@
             <span class="empty">boş</span>
           {% endif %}
         </td>
+        <td>{% if puzzle %}{{ status_button(puzzle, "dashboard", puzzle.id in locked) }}{% endif %}</td>
       </tr>
     {% endfor %}
   </table>

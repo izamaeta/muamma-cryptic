@@ -1,4 +1,5 @@
 {% extends "admin/base.html" %}
+{% from "admin/_status.html" import status_button %}
 
 {% block content %}
   {% macro field(f, locked=False) %}
@@ -32,6 +33,8 @@
     {% endif %}
     <button type="submit">Kaydet</button>
   </form>
+
+  {% if puzzle %}{{ status_button(puzzle, "edit", locked) }}{% endif %}
 
   {% if puzzle and not locked %}
     <form method="post" action="{{ url_for('admin.puzzle_delete', puzzle_id=puzzle.id) }}" class="delete-form">

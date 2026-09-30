@@ -101,6 +101,43 @@ def _date_taken(day: date, puzzle: Puzzle | None) -> bool:
     return db.session.scalar(query) is not None
 
 
+def publish_problem(puzzle: Puzzle, today: date) -> str | None:
+    """Why this puzzle cannot go live, if it cannot.
+
+    The same rules the form applies, but checked every time rather than
+    only when the date changes: a draft can sit until its day has passed.
+    """
+    if puzzle.kind != "daily":
+        return None
+    if puzzle.publish_date is None:
+        return "Hazır günlük bulmacanın tarihi olmalı."
+    if puzzle.publish_date < today:
+        return "Geçmiş bir tarihe bulmaca konamaz."
+    if _date_taken(puzzle.publish_date, puzzle):
+        return "Bu tarihte başka bir bulmaca var."
+    return None
+
+
+def locked_ids(puzzles: list[Puzzle], today: date) -> set[int]:
+    """Which of these are locked, in one query rather than one per row."""
+    ids = [puzzle.id for puzzle in puzzles]
+    if not ids:
+        return set()
+
+    played = set(db.session.scalars(select(Play.puzzle_id).where(Play.puzzle_id.in_(ids))))
+    return {
+        puzzle.id
+        for puzzle in puzzles
+        if puzzle.id in played
+        or (
+            puzzle.kind == "daily"
+            and puzzle.status == "ready"
+            and puzzle.publish_date is not None
+            and puzzle.publish_date <= today
+        )
+    }
+
+
 def save_puzzle(form, puzzle: Puzzle | None, today: date) -> Puzzle | None:
     """Check cross-field rules, then create or update the puzzle."""
     errors = {}
