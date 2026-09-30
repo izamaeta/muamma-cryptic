@@ -47,7 +47,11 @@ def turkish_long_date(value: date) -> str:
 
 
 def minutes_seconds(total: int | None) -> str:
-    """Whole seconds as m:ss."""
+    """Whole seconds as m:ss, or h:mm:ss once past an hour."""
     if total is None:
         return ""
-    return f"{total // 60}:{total % 60:02d}"
+    hours, rest = divmod(total, 3600)
+    minutes, seconds = divmod(rest, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes}:{seconds:02d}"
