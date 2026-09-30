@@ -478,6 +478,53 @@ player row.
 `/istatistik` answers 301 to the home page, since the address has been
 linked and indexed.
 
+## Publishing from the admin
+
+A draft goes live with one button in the list, the calendar and the edit
+page. The checks live in `publish_problem` rather than in the form's
+`save_puzzle`: the form only re-checks a date when it changes, which is
+right for editing but wrong here, because a draft can sit untouched until
+its day has passed.
+
+The "date already taken" branch cannot actually be reached for a stored
+puzzle, since `publish_date` is unique in the database; it stays as a
+guard in case that ever loosens, and the test records why instead of
+pretending to exercise it.
+
+The buttons carry a `back` field checked against a fixed list rather than
+following `request.referrer`, for the same reason the login page ignores
+`next`: a referrer is attacker-controlled and would be an open redirect.
+
+Pulling a puzzle back to draft is refused once it is published or played,
+which is the same lock that already protects its answer and date.
+
+## Guide and glossary
+
+The guide's text, indicator words and worked examples live in
+`muamma/guide.py` as plain data, and both the guide page and the in-game
+glossary render from it. Editing the content means editing one file, and
+the two can never drift apart. Each clue is stored as a list of runs, so
+every part carries its own role and the template never has to search the
+sentence for substrings to colour.
+
+The tabs are built by JavaScript from sections that are already in the
+markup. Rendering a tablist server-side would leave dead buttons when the
+module fails to load; this way the page is three readable sections and the
+script only upgrades them, adding the roles, arrow-key movement and
+selection state.
+
+The anatomy parts are `<button>` elements. A span with a mouse handler
+would need extra work for touch and keyboard; a button gets all three, and
+`aria-describedby` ties each part to its explanation.
+
+Inside the glossary's search field the first Escape is swallowed by the
+browser to undo the typing, so the field closes the dialog itself. Escape
+then means the same thing in every window.
+
+Colour alone never says which part is which: each one is labelled in
+words next to it, for the same reason the tiles have a hidden text
+pattern.
+
 ## Dropped features
 
 The Turkish on-screen keyboard, the indicator and fodder highlights with
