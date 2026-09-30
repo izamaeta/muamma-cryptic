@@ -388,6 +388,54 @@ The game script is split into `motion.js`, `result.js` and `game.js` and
 loaded as an ES module, which keeps the files small without any inline
 script; modules load from the same origin, so the CSP is unchanged.
 
+## Opening letters
+
+"Harf aç" opens a random position rather than the next one from the left,
+which made every puzzle start the same way. The order is not stored: it is
+derived from the player id and the puzzle id with a sha256 digest fed to
+`random.Random`, so it is the same on every request and usually differs
+between players. Python's `hash()` would not do, since it is salted per
+process and would hand the same player different letters after a restart.
+
+The order covers every position except the last, so "the last letter never
+opens" is a property of the sequence rather than a check somewhere. The
+API's existing stop at one letter short of the answer still holds.
+
+`tile_groups` and `letter_pattern` take the set of open positions instead
+of a count, which leaves word breaks alone for multi-word answers. The
+letter endpoint returns the position it opened so the client flips the
+right tile instead of guessing which one is new.
+
+The position is derived from the player object rather than `play.player_id`
+inside the endpoint: a play created in that same request has no id on the
+foreign key column until the session is flushed, which silently gave every
+new player the same order.
+
+## Difficulty and time chips
+
+Two chips sit above the clue on every puzzle. The clock starts when the
+page is first opened, from the same session timestamp as the solve time,
+and the server sends the seconds already elapsed so a reload continues
+instead of restarting. The client only increments a number it was given.
+
+For this to hold, `mark_opened` now keeps an existing timestamp instead of
+writing a new one on every render. Before, reloading the page restarted
+the clock, which also made the solve time shorter than it really was.
+
+When a puzzle finishes, the counter stops and is set to the duration from
+the API response, so the chip and the result window can never disagree.
+A finished puzzle's page renders the final figure with the counter already
+stopped. Both sides format the same way: `dk:sn`, or `sa:dk:sn` past an
+hour.
+
+## Dropped features
+
+The Turkish on-screen keyboard, the indicator and fodder highlights with
+their legend, the par chip and the "guesses / par" box, the step-by-step
+solution built from those highlights, and the community solve rate were
+all dropped and removed from docs/design.md. The clue keeps its definition
+highlight and the finished puzzle keeps the explanation the setter wrote.
+
 ## Guess input
 
 The input accepts letters only and never more than the answer holds. The
