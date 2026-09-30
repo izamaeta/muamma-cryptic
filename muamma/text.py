@@ -44,3 +44,10 @@ _TURKISH_MONTHS = (
 def turkish_long_date(value: date) -> str:
     """Day, Turkish month name and year, as in 29 Eylül 2026."""
     return f"{value.day} {_TURKISH_MONTHS[value.month - 1]} {value.year}"
+
+
+def minutes_seconds(total: int | None) -> str:
+    """Whole seconds as m:ss."""
+    if total is None:
+        return ""
+    return f"{total // 60}:{total % 60:02d}"
