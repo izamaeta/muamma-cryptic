@@ -11,12 +11,16 @@ def _as_utc(value):
     return value if value.tzinfo else value.replace(tzinfo=UTC)
 
 
+def duration_between(started, finished) -> int | None:
+    """Whole seconds between two timestamps, whatever their tzinfo."""
+    if started is None or finished is None:
+        return None
+    return max(0, int((_as_utc(finished) - _as_utc(started)).total_seconds()))
+
+
 def play_duration(play: Play) -> int | None:
     """Seconds between the page opening and the puzzle being finished."""
-    if play.finished_at is None or play.started_at is None:
-        return None
-    seconds = (_as_utc(play.finished_at) - _as_utc(play.started_at)).total_seconds()
-    return max(0, int(seconds))
+    return duration_between(play.started_at, play.finished_at)
 
 
 def share_text(puzzle: Puzzle, play: Play, streak: int, url: str) -> str | None:

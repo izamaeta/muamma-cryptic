@@ -2,6 +2,7 @@ from flask import abort, jsonify, request
 
 from muamma import clock
 from muamma.api import bp
+from muamma.community import community_line
 from muamma.extensions import db, limiter
 from muamma.gameplay import finish_play, get_or_create_play, log_event
 from muamma.models import Puzzle
@@ -16,7 +17,17 @@ from muamma.puzzles import (
     reveal_order,
 )
 from muamma.share import finish_details
+from muamma.stats import player_stats
 from muamma.text import normalize_answer
+
+EMPTY_STATS = {
+    "daily_played": 0,
+    "daily_solved": 0,
+    "solve_rate": 0,
+    "current_streak": 0,
+    "max_streak": 0,
+    "practice_solved": 0,
+}
 
 MAX_GUESS_LENGTH = 64
 API_LIMIT = "30 per minute;500 per hour"
@@ -61,11 +72,21 @@ def _solution(puzzle, play, player, today):
         "explanation": puzzle.explanation,
         "streak": streak,
         "highlight": clue_parts(puzzle),
+        "community": community_line(puzzle, today),
         "guesses": play.guess_count,
         "hints": play.hints_used,
         "letters": play.letters_revealed,
         **finish_details(puzzle, play, streak, today),
     }
+
+
+@bp.get("/me/stats")
+def my_stats():
+    """This browser's own numbers; no player is an empty scoreboard."""
+    player = current_player()
+    if player is None:
+        return jsonify(**EMPTY_STATS)
+    return jsonify(**player_stats(player, clock.today()))
 
 
 @bp.post("/puzzles/<int:puzzle_id>/guess")

@@ -5,6 +5,7 @@ from datetime import date
 from sqlalchemy import select
 
 from muamma.extensions import db
+from muamma.community import community_line
 from muamma.gameplay import wrong_guesses
 from muamma.models import Play, Puzzle
 from muamma.text import normalize_answer, turkish_upper
@@ -51,6 +52,15 @@ def archive_neighbours(day: date, today: date) -> tuple[Puzzle | None, Puzzle | 
         .limit(1)
     )
     return previous, following
+
+
+def is_sunday_puzzle(puzzle: Puzzle) -> bool:
+    """Daily puzzles published on a Sunday are the week's hard one."""
+    return (
+        puzzle.kind == "daily"
+        and puzzle.publish_date is not None
+        and puzzle.publish_date.weekday() == 6
+    )
 
 
 def is_playable(puzzle: Puzzle, today: date) -> bool:
@@ -145,9 +155,11 @@ def puzzle_view(puzzle: Puzzle, play: Play | None, today: date) -> dict:
         "answer_length": answer_length(puzzle.enumeration),
         "difficulty_label": DIFFICULTY_LABELS.get(puzzle.difficulty, "Orta"),
         "elapsed": elapsed_seconds(puzzle, play),
+        "community": community_line(puzzle, today) if finished else None,
         "tiles": tile_groups(puzzle, shown),
         "pattern": letter_pattern(puzzle, opened) if opened and not finished else None,
         "highlight": clue_parts(puzzle) if finished or hints_used else None,
         "streak_risk": puzzle.kind == "daily" and puzzle.publish_date == today,
+        "sunday": is_sunday_puzzle(puzzle),
         **details,
     }

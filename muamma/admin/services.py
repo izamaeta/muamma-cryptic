@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from muamma.extensions import db
 from muamma.models import Play, Puzzle
-from muamma.puzzles import answer_length
+from muamma.puzzles import answer_length, is_sunday_puzzle
 from muamma.text import normalize_answer, turkish_upper
 
 STOCK_WARNING_DAYS = 7
@@ -69,6 +69,29 @@ def upcoming(today: date) -> list[tuple[date, Puzzle | None]]:
     by_day = {puzzle.publish_date: puzzle for puzzle in puzzles}
     days = [today + timedelta(days=offset) for offset in range(CALENDAR_DAYS)]
     return [(day, by_day.get(day)) for day in days]
+
+
+def sunday_gaps(today: date) -> list[date]:
+    """Sundays in the calendar window without a hard puzzle on them."""
+    days = [today + timedelta(days=offset) for offset in range(CALENDAR_DAYS)]
+    sundays = [day for day in days if day.weekday() == 6]
+    if not sundays:
+        return []
+
+    by_day = {
+        puzzle.publish_date: puzzle
+        for puzzle in db.session.scalars(
+            select(Puzzle).where(Puzzle.kind == "daily", Puzzle.publish_date.in_(sundays))
+        )
+    }
+    return [day for day in sundays if (by_day.get(day) is None or by_day[day].difficulty != 3)]
+
+
+def sunday_warning(puzzle: Puzzle) -> str | None:
+    """Saving an easy Sunday puzzle is allowed, but worth saying out loud."""
+    if is_sunday_puzzle(puzzle) and puzzle.difficulty != 3:
+        return "Pazar günü haftanın çetin muamması olmalı; bunun zorluğu Zor değil."
+    return None
 
 
 def _date_taken(day: date, puzzle: Puzzle | None) -> bool:

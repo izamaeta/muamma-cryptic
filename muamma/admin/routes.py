@@ -21,6 +21,8 @@ from muamma.admin.services import (
     lock_fields,
     save_puzzle,
     stock_days,
+    sunday_gaps,
+    sunday_warning,
     upcoming,
 )
 from muamma.extensions import db, limiter
@@ -28,6 +30,12 @@ from muamma.models import Admin, Puzzle, utcnow
 from muamma.security import check_login
 
 SESSION_KEY = "admin_since"
+
+
+def _warn_about_sunday(puzzle):
+    message = sunday_warning(puzzle)
+    if message:
+        flash(message)
 
 
 @bp.before_request
@@ -85,6 +93,7 @@ def dashboard():
         stock=stock,
         warning=stock < STOCK_WARNING_DAYS,
         calendar=upcoming(today),
+        sundays=sunday_gaps(today),
     )
 
 
@@ -119,9 +128,12 @@ def puzzle_new():
     if request.method == "GET":
         form.kind.data = request.args.get("kind", "daily")
 
-    if form.validate_on_submit() and save_puzzle(form, None, clock.today()):
-        flash("Bulmaca kaydedildi.")
-        return redirect(url_for("admin.puzzles"))
+    if form.validate_on_submit():
+        saved = save_puzzle(form, None, clock.today())
+        if saved is not None:
+            flash("Bulmaca kaydedildi.")
+            _warn_about_sunday(saved)
+            return redirect(url_for("admin.puzzles"))
 
     return render_template("admin/puzzle_form.html", form=form, puzzle=None, locked=False)
 
@@ -139,9 +151,12 @@ def puzzle_edit(puzzle_id):
     if locked:
         lock_fields(form, puzzle)
 
-    if form.validate_on_submit() and save_puzzle(form, puzzle, today):
-        flash("Bulmaca güncellendi.")
-        return redirect(url_for("admin.puzzles"))
+    if form.validate_on_submit():
+        saved = save_puzzle(form, puzzle, today)
+        if saved is not None:
+            flash("Bulmaca güncellendi.")
+            _warn_about_sunday(saved)
+            return redirect(url_for("admin.puzzles"))
 
     return render_template(
         "admin/puzzle_form.html", form=form, puzzle=puzzle, locked=locked

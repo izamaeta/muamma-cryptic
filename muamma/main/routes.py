@@ -24,7 +24,6 @@ from muamma.puzzles import (
     is_playable,
     puzzle_view,
 )
-from muamma.stats import player_stats
 from muamma.timing import mark_opened
 
 ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -136,9 +135,8 @@ def minute_cryptic():
 
 @bp.get("/istatistik")
 def stats():
-    player = current_player()
-    data = player_stats(player, clock.today()) if player else None
-    return render_template("stats.html", stats=data)
+    """The page became a dialog; keep the old address pointing somewhere."""
+    return redirect(url_for("main.index"), code=301)
 
 
 @bp.get("/nasil-oynanir")
