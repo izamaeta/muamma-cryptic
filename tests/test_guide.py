@@ -34,7 +34,7 @@ def test_every_example_shows_its_answer(guide_html):
         for kind in group["types"]
         if kind["example"]
     ]
-    assert len(answers) == 9
+    assert len(answers) == 12
     for answer in answers:
         assert f"<strong>{answer}</strong>" in guide_html
 
