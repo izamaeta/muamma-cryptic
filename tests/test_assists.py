@@ -105,16 +105,27 @@ def test_daily_puzzle_is_not_served_as_practice(client):
     assert client.get(f"/tadimlik/{puzzle.id}").status_code == 404
 
 
-def test_stats_page(client):
+def test_stats_endpoint_counts_a_solve(client):
     puzzle = add_puzzle()
     post(client, puzzle, "guess", guess="arı")
-    html = client.get("/istatistik").get_data(as_text=True)
-    assert "%100" in html
+
+    data = client.get("/api/me/stats").get_json()
+    assert data["daily_played"] == 1
+    assert data["daily_solved"] == 1
+    assert data["solve_rate"] == 100
+    assert data["current_streak"] == 1
 
 
-def test_stats_page_without_player(client):
-    html = client.get("/istatistik").get_data(as_text=True)
-    assert "Henüz bir bulmaca oynamadın" in html
+def test_stats_endpoint_without_a_player(client):
+    data = client.get("/api/me/stats").get_json()
+    assert data == {
+        "daily_played": 0,
+        "daily_solved": 0,
+        "solve_rate": 0,
+        "current_streak": 0,
+        "max_streak": 0,
+        "practice_solved": 0,
+    }
 
     
 def test_clue_without_definition_starts_with_own_hints(client):

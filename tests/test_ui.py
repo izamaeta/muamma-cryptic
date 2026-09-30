@@ -134,3 +134,19 @@ def test_timer_survives_a_reload(client):
     html = client.get("/").get_data(as_text=True)
     elapsed = int(html.split('data-elapsed="')[1].split('"')[0])
     assert elapsed >= 3 * 60
+
+
+def test_stats_window_is_on_every_page(client):
+    add_puzzle()
+    for path in ("/", "/arsiv", "/gizlilik", "/nasil-oynanir"):
+        html = client.get(path).get_data(as_text=True)
+        assert 'class="stats-window"' in html
+        assert 'class="stats-open"' in html
+        assert "js/stats.js" in html
+
+
+def test_stats_window_offers_a_way_back_when_empty(client):
+    html = client.get("/").get_data(as_text=True)
+    window = html[html.index('class="stats-window"') : html.index("</dialog>", html.index('class="stats-window"'))]
+    assert "Henüz bir muamma çözmedin" in window
+    assert 'data-key="solve_rate"' in window

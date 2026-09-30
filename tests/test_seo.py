@@ -27,8 +27,9 @@ def test_comparison_page_is_honest_and_disclaims_the_brand(client):
 def test_phone_menu_holds_the_main_links(client):
     html = client.get("/").get_data(as_text=True)
     menu = html[html.index('class="nav-menu-panel"') : html.index("</details>")]
-    for target in ("/tadimlik", "/arsiv", "/istatistik", "/nasil-oynanir"):
+    for target in ("/tadimlik", "/arsiv", "/nasil-oynanir"):
         assert f'href="{target}"' in menu
+    assert 'class="stats-open"' in menu
 
 
 def test_footer_keeps_its_links(client):
@@ -45,8 +46,14 @@ def test_pages_have_canonical_and_share_tags(client):
 
 
 def test_personal_pages_are_not_indexed(client):
-    html = client.get("/istatistik").get_data(as_text=True)
+    html = client.get("/tadimlik").get_data(as_text=True)
     assert '<meta name="robots" content="noindex, follow">' in html
+
+
+def test_the_stats_page_moved_into_the_window(client):
+    response = client.get("/istatistik")
+    assert response.status_code == 301
+    assert response.headers["Location"] == "/"
 
 
 def test_missing_page_uses_custom_404(client):
