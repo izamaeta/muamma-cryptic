@@ -593,6 +593,65 @@ the page was worth in search, we would rather not talk about another
 product on our own site. The name appears nowhere on it any more, and a
 test walks the pages to keep it that way.
 
+## Fitting the tiles on a phone
+
+The tile row is a block with the word groups as inline-flex boxes, and
+each tile's size comes from a custom property that `game.js` sets from the
+measured row width and the longest word. The obvious CSS-only version —
+shrinkable flex items with a `min-width` floor — does not work: when a
+group asks for its max-content width, Chrome sizes a shrinkable flex item
+from its `min-width` rather than its `flex-basis`, so every tile collapsed
+to the floor at every screen size, desktop included. Measuring and setting
+the size is both simpler to reason about and immune to that.
+
+Measured sizes, phone cap 54px and desktop cap 66px:
+
+| Answer | 320 | 360 | 390 | 430 | 768 | 1366 |
+|---|---|---|---|---|---|---|
+| 3 letters | 54 | 54 | 54 | 54 | 54 | 66 |
+| 5,5,5 | 43.6 | 51.6 | 54 | 54 | 54 | 66 |
+| 15 letters | 20* | 20* | 20* | 20* | 35.9 | 39.6 |
+
+\* at the 20px floor, where the row scrolls inside the card.
+
+Below 20px a tile is not worth looking at, so the row scrolls instead,
+with a fading right edge and a thin scrollbar. The page never scrolls
+sideways at any width. Word groups wrap as units, so a word is never
+split; only a single word too long for the floor reaches the scrolling
+case.
+
+The row keeps `overflow-x: auto` at all times, which also saves a reader
+without JavaScript from a sideways page, and carries enough vertical
+padding that the solved bounce above and the falling letters below are not
+clipped by it.
+
+The admin form warns when a word is longer than twelve letters. It does
+not block saving: the setter may have a good reason, and the warning is
+there so the tile size is a decision rather than a surprise.
+
+## Reading pages
+
+The guide, "Muamma nedir?", privacy and the archive carry a `reading`
+class on `<body>` and get their own wider, airier column. They were
+sharing the game's 680px, which is right for a card with a clue and tiles
+and wrong for prose: too long and thin on a desktop, too cramped on a
+phone. The game's own layout is untouched.
+
+## The result window celebrates
+
+Solving plays about 1.2 seconds: a spring entrance, a hop and tilt on the
+cat, a dozen drops of sealing wax thrown from behind it, the title arriving
+word by word, the numbers counting up, and one pulse on the share button a
+second in. Only transform and opacity are animated.
+
+The drops are created in JavaScript and removed in a `finally`, so a
+cancelled or interrupted animation cannot leave anything behind in the
+page.
+
+Revealing the answer opens the same window plainly. The celebration is for
+solving; firing it after someone gives up would read as mockery. Under
+`prefers-reduced-motion` none of it runs and the window simply appears.
+
 ## Practice by type
 
 Each guide type names the stored `technique` it corresponds to, on the
