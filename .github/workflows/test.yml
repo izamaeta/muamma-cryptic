@@ -1,0 +1,83 @@
+name: Testler
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Testler ve migrationlar
+    runs-on: ubuntu-latest
+
+    # Throwaway database for this run only. These values are test fixtures,
+    # not secrets: the container is created and destroyed with the job and is
+    # never reachable from outside the runner.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: muamma
+          POSTGRES_PASSWORD: muamma-ci
+          POSTGRES_DB: muamma_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U muamma -d muamma_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      FLASK_APP: muamma
+      SECRET_KEY: ci-only-not-a-real-key
+      DATABASE_URL: postgresql+psycopg://muamma:muamma-ci@127.0.0.1:5432/muamma_ci
+      RATELIMIT_STORAGE_URI: memory://
+      SITE_URL: http://localhost
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Bağımlılıkları kur
+        run: pip install -r requirements-dev.txt
+
+      - name: pytest
+        run: pytest
+
+      # The suite runs on SQLite; this is where the migrations meet the real
+      # database they will run against.
+      - name: Migrationları PostgreSQL üzerinde çalıştır
+        run: flask db upgrade
+
+      - name: Modellerle migrationları karşılaştır
+        run: flask db check
+
+  docker:
+    name: Docker imajı
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Builds and throws away: this only answers whether the image still
+      # builds, so there is no registry and no credentials.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
