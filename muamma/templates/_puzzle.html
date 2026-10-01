@@ -42,15 +42,17 @@
 
   <div class="helpers" {% if finished %}hidden{% endif %}>
     <button type="button" data-action="hint">İpucu</button>
-    <button type="button" data-action="letter">Harf aç</button>
-    <button type="button" data-action="reveal">Mührü aç</button>
+    <button type="button" data-action="letter"><span class="wide">Harf aç</span><span class="narrow">Harf</span></button>
+    <button type="button" data-action="reveal"><span class="wide">Mührü aç</span><span class="narrow">Mühür</span></button>
+    {% if not streak_risk %}
+      <button type="button" class="glossary-open" aria-label="Gösterge sözlüğü">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 5h16M4 12h10M4 19h7"/>
+        </svg>
+        <span class="wide">Gösterge sözlüğü</span>
+      </button>
+    {% endif %}
   </div>
-
-  {% if not streak_risk %}
-    <p class="glossary-link">
-      <button type="button" class="glossary-open">Gösterge sözlüğü</button>
-    </p>
-  {% endif %}
 
   <ol class="hints">
     {% for hint in used_hints %}<li>{{ hint }}</li>{% endfor %}
@@ -123,7 +125,9 @@
 
   <dialog class="result" data-ready="{{ 1 if finished else 0 }}" aria-labelledby="result-title-{{ puzzle.id }}">
     <div class="result-panel">
-      <img class="result-logo" src="{{ url_for('static', filename='img/logo/logo-96.png') }}" width="96" height="96" alt="">
+      <span class="result-logo-wrap">
+        <img class="result-logo" src="{{ url_for('static', filename='img/logo/logo-96.png') }}" width="96" height="96" alt="">
+      </span>
       <h2 class="result-title" id="result-title-{{ puzzle.id }}">
         {%- if solved %}Tebrikler! Muamma çözüldü{% elif finished %}Mühür açıldı{% endif -%}
       </h2>

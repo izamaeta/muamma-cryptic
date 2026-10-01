@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from muamma.extensions import db
 from muamma.models import Play, Puzzle
-from muamma.puzzles import answer_length, is_sunday_puzzle
+from muamma.puzzles import answer_length, enumeration_parts, is_sunday_puzzle
 from muamma.text import normalize_answer, turkish_upper
 
 STOCK_WARNING_DAYS = 7
@@ -85,6 +85,20 @@ def sunday_gaps(today: date) -> list[date]:
         )
     }
     return [day for day in sundays if (by_day.get(day) is None or by_day[day].difficulty != 3)]
+
+
+LONGEST_COMFORTABLE_WORD = 12
+
+
+def long_word_warning(puzzle: Puzzle) -> str | None:
+    """Saving is allowed, but a long word leaves tiny tiles on a phone."""
+    longest = max(enumeration_parts(puzzle.enumeration))
+    if longest <= LONGEST_COMFORTABLE_WORD:
+        return None
+    return (
+        f"Cevapta {longest} harflik bir kelime var; dar ekranlarda kutucuklar "
+        "çok küçülür."
+    )
 
 
 def sunday_warning(puzzle: Puzzle) -> str | None:

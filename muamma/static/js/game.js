@@ -245,9 +245,36 @@ if (section) {
 
     if (result) {
       result.fill(data, solved);
-      await result.open();
+      await result.open(solved);
     }
   }
+
+  const TILE_MIN = 20;
+  const TILE_GAP = 4;
+
+  function fitTiles() {
+    // measure without the scrolling state, or the row would stay wide
+    tileBox.classList.remove("scrollable");
+
+    const longest = Math.max(
+      ...[...tileBox.querySelectorAll(".tile-group")].map((group) => group.children.length),
+      1
+    );
+    const max = parseFloat(getComputedStyle(tileBox).getPropertyValue("--tile-max")) || 54;
+    const room = tileBox.clientWidth - 12;
+    const fits = (room - (longest - 1) * TILE_GAP) / longest;
+    const size = Math.max(TILE_MIN, Math.min(max, fits));
+
+    tileBox.style.setProperty("--tile-size", `${size.toFixed(1)}px`);
+    tileBox.style.setProperty("--tile-font", `${(size * 0.48).toFixed(1)}px`);
+
+    if (tileBox.scrollWidth > tileBox.clientWidth + 1) {
+      tileBox.classList.add("scrollable");
+    }
+  }
+
+  window.addEventListener("resize", fitTiles);
+  fitTiles();
 
   input.addEventListener("input", () => {
     cancelDrop();

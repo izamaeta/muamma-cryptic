@@ -71,6 +71,107 @@ export async function dropLetters(slots) {
   return () => running.forEach((animation) => animation.cancel());
 }
 
+const SPRING = "cubic-bezier(.34, 1.56, .64, 1)";
+
+export function springIn(element) {
+  return play(
+    element,
+    [
+      { transform: "translateY(26px) scale(0.9)", opacity: 0 },
+      { transform: "translateY(0) scale(1)", opacity: 1 },
+    ],
+    { duration: 420, easing: SPRING }
+  );
+}
+
+export function logoHop(element) {
+  return play(
+    element,
+    [
+      { transform: "translateY(0) rotate(0deg)" },
+      { transform: "translateY(-14px) rotate(-7deg)", offset: 0.35 },
+      { transform: "translateY(0) rotate(5deg)", offset: 0.65 },
+      { transform: "translateY(0) rotate(0deg)" },
+    ],
+    { duration: 520, delay: 60, easing: "ease-out" }
+  );
+}
+
+export async function sparkBurst(anchor, count = 12) {
+  if (!motionOk() || !anchor) return;
+
+  const layer = document.createElement("span");
+  layer.className = "sparks";
+  layer.setAttribute("aria-hidden", "true");
+  anchor.append(layer);
+
+  const sparks = Array.from({ length: count }, (_, i) => {
+    const spark = document.createElement("span");
+    spark.className = i % 3 === 0 ? "spark spark-red" : "spark";
+    layer.append(spark);
+
+    const angle = (i / count) * 2 * Math.PI + Math.random() * 0.4;
+    const distance = 48 + Math.random() * 34;
+    return spark.animate(
+      [
+        { transform: "translate(-50%, -50%) scale(0.4)", opacity: 1 },
+        {
+          transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${
+            Math.sin(angle) * distance
+          }px)) scale(1)`,
+          opacity: 0,
+        },
+      ],
+      { duration: 520 + Math.random() * 160, easing: "cubic-bezier(.2, .7, .3, 1)", fill: "forwards" }
+    );
+  });
+
+  try {
+    await Promise.all(sparks.map((spark) => spark.finished.catch(() => {})));
+  } finally {
+    layer.remove();
+  }
+}
+
+export async function revealWords(element) {
+  if (!motionOk() || !element) return;
+
+  const words = element.textContent.trim().split(/\s+/);
+  element.replaceChildren(
+    ...words.flatMap((word, i) => {
+      const span = document.createElement("span");
+      span.className = "word";
+      span.textContent = word;
+      return i ? [document.createTextNode(" "), span] : [span];
+    })
+  );
+
+  await Promise.all(
+    [...element.querySelectorAll(".word")].map((span, i) =>
+      play(
+        span,
+        [
+          { transform: "translateY(8px)", opacity: 0 },
+          { transform: "translateY(0)", opacity: 1 },
+        ],
+        { duration: 260, delay: 150 + i * 60 }
+      )
+    )
+  );
+}
+
+export function pulse(element) {
+  return play(
+    element,
+    [
+      { transform: "scale(1)" },
+      { transform: "scale(1.05)", offset: 0.5 },
+      { transform: "scale(1)" },
+    ],
+    { duration: 300, delay: 1000 }
+  );
+}
+
 export function riseIn(element) {
   return play(
     element,

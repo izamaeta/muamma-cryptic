@@ -13,6 +13,8 @@
   {%- endfor -%}
 {%- endmacro %}
 
+{% block body_class %}reading{% endblock %}
+
 {% block content %}
   <article class="guide">
     <h1>{{ guide.INTRO.title }}</h1>
@@ -68,6 +70,7 @@
           <h3 class="guide-panel-title">{{ group.label }}</h3>
           <p>{{ group.intro }}</p>
 
+          <div class="type-cards">
           {% for kind in group.types %}
             <details class="type-card">
               <summary>{{ kind.name }}</summary>
@@ -117,6 +120,7 @@
               {% endif %}
             </details>
           {% endfor %}
+          </div>
         </section>
       {% endfor %}
     </div>

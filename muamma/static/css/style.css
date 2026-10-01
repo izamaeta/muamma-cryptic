@@ -587,27 +587,45 @@ a:hover {
 /* Tiles */
 
 .tiles {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.9rem;
-  margin-bottom: 1.5rem;
+  --tile-max: 54px;
+  /* a block, not a flex row: as flex items the word groups collapse to
+     their min-content width and drag the tiles down with them */
+  display: block;
+  /* room for the solved bounce above and the falling letters below */
+  padding: 0.6rem 0 1.7rem;
+  margin-bottom: 0.3rem;
+  text-align: center;
   cursor: text;
+  /* the row scrolls rather than the page when even the smallest tiles
+     do not fit; the padding keeps the animations out of the clip */
+  overflow-x: auto;
+}
+
+/* the hint only appears when there is really something to scroll */
+.tiles.scrollable {
+  text-align: left;
+  white-space: nowrap;
+  scrollbar-width: thin;
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2.5rem), transparent 100%);
 }
 
 .tile-group {
-  display: flex;
-  gap: 0.4rem;
+  display: inline-flex;
+  max-width: 100%;
+  gap: 0.25rem;
+  margin: 0.25rem 0.35rem;
+  vertical-align: top;
 }
 
 .tile {
   position: relative;
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 58px;
+  /* fixed, because Chrome sizes a shrinkable flex item from its
+     min-width when the group asks for its max-content width */
+  flex: 0 0 var(--tile-size, var(--tile-max));
+  aspect-ratio: 27 / 29;
   font-family: var(--serif);
-  font-size: 1.6rem;
   font-weight: 600;
   background: var(--tile-fill);
   border: 2px solid var(--tile-border);
@@ -616,6 +634,9 @@ a:hover {
 
 .tile .letter {
   display: block;
+  /* set from the measured tile width in game.js; this is the common case */
+  font-size: var(--tile-font, 1.6rem);
+  line-height: 1;
 }
 
 .tile.filled {
@@ -774,9 +795,60 @@ button.primary:hover {
 
 .helpers {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
   margin-top: 0.75rem;
+}
+
+.helpers button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: 0.5rem;
+  white-space: nowrap;
+}
+
+.helpers .narrow,
+.helpers .glossary-open svg {
+  display: none;
+}
+
+.helpers .glossary-open svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 560px) {
+  .helpers .glossary-open {
+    flex: 0 0 44px;
+    padding-inline: 0;
+  }
+
+  .helpers .glossary-open .wide {
+    display: none;
+  }
+
+  .helpers .glossary-open svg {
+    display: block;
+  }
+}
+
+@media (max-width: 400px) {
+  .helpers button {
+    padding-inline: 0.3rem;
+    font-size: 0.9rem;
+  }
+
+  .helpers .wide {
+    display: none;
+  }
+
+  .helpers .narrow {
+    display: inline;
+  }
 }
 
 .helpers button[data-action="reveal"] {
@@ -952,11 +1024,39 @@ button.primary:hover {
   box-shadow: 0 24px 60px rgb(7 18 47 / 35%);
 }
 
+.result-logo-wrap {
+  position: relative;
+  display: block;
+  width: 72px;
+  margin: 0 auto 0.5rem;
+}
+
 .result-logo {
   display: block;
   width: 72px;
   height: 72px;
-  margin: 0 auto 0.5rem;
+}
+
+.sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--turquoise);
+  border-radius: 50%;
+}
+
+.spark-red {
+  width: 8px;
+  height: 8px;
+  background: var(--red);
 }
 
 .result-title {
@@ -1445,11 +1545,12 @@ button.primary:hover {
     font-size: 2.6rem;
   }
 
+  .tiles {
+    --tile-max: 66px;
+  }
+
   .tile {
-    width: 66px;
-    height: 70px;
     border-radius: 12px;
-    font-size: 1.9rem;
   }
 }
 
@@ -1711,17 +1812,6 @@ button.primary:hover {
 
 /* Glossary window */
 
-.glossary-link {
-  margin: 0.75rem 0 0;
-}
-
-.glossary-link button {
-  min-height: 0;
-  padding: 0.35rem 0.7rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
 .glossary-panel {
   width: min(28rem, 100%);
   text-align: left;
@@ -1897,5 +1987,86 @@ button.primary:hover {
 
   .about-cards {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Reading pages
+   Wider and airier than the game, which keeps its own narrow column. */
+
+.reading .container {
+  max-width: 840px;
+  padding: 2rem 1rem 4rem;
+}
+
+.reading p,
+.reading li,
+.reading dd {
+  line-height: 1.65;
+}
+
+.reading h1 {
+  margin-bottom: 1.25rem;
+  font-size: 2rem;
+}
+
+.reading h2 {
+  margin: 2.75rem 0 0.75rem;
+}
+
+.reading h3 {
+  margin: 1.75rem 0 0.35rem;
+}
+
+.reading p {
+  margin: 0 0 1.1rem;
+}
+
+.reading .guide,
+.reading .about,
+.reading .howto {
+  max-width: 100%;
+}
+
+.reading .guide > p,
+.reading .about p,
+.reading .howto > p,
+.reading .guide-panel > p,
+.reading .guide-tips,
+.reading .guide-rule {
+  max-width: 68ch;
+}
+
+.reading .about-hero p,
+.reading .about-end p {
+  margin-inline: auto;
+}
+
+@media (max-width: 480px) {
+  .reading .container {
+    padding: 1.5rem 0.75rem 3rem;
+  }
+}
+
+@media (min-width: 680px) {
+  .reading .about-rhythm {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem 2rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .reading .guide-panel .type-card {
+    margin: 0;
+  }
+
+  .reading .guide-panel > .type-card {
+    break-inside: avoid;
+  }
+
+  .reading .type-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
+    align-items: start;
   }
 }

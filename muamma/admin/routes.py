@@ -20,6 +20,7 @@ from muamma.admin.services import (
     is_locked,
     lock_fields,
     locked_ids,
+    long_word_warning,
     publish_problem,
     save_puzzle,
     stock_days,
@@ -37,10 +38,11 @@ SESSION_KEY = "admin_since"
 BACK_PAGES = {"dashboard": "admin.dashboard", "puzzles": "admin.puzzles"}
 
 
-def _warn_about_sunday(puzzle):
-    message = sunday_warning(puzzle)
-    if message:
-        flash(message)
+def _warn_about(puzzle):
+    """Things worth saying after a save, none of which block it."""
+    for message in (sunday_warning(puzzle), long_word_warning(puzzle)):
+        if message:
+            flash(message)
 
 
 def _back_to(puzzle):
@@ -151,7 +153,7 @@ def puzzle_new():
         saved = save_puzzle(form, None, clock.today())
         if saved is not None:
             flash("Bulmaca kaydedildi.")
-            _warn_about_sunday(saved)
+            _warn_about(saved)
             return redirect(url_for("admin.puzzles"))
 
     return render_template("admin/puzzle_form.html", form=form, puzzle=None, locked=False)
@@ -174,7 +176,7 @@ def puzzle_edit(puzzle_id):
         saved = save_puzzle(form, puzzle, today)
         if saved is not None:
             flash("Bulmaca güncellendi.")
-            _warn_about_sunday(saved)
+            _warn_about(saved)
             return redirect(url_for("admin.puzzles"))
 
     return render_template(
@@ -199,7 +201,7 @@ def puzzle_publish(puzzle_id):
     puzzle.status = "ready"
     db.session.commit()
     flash("Bulmaca yayına alındı.")
-    _warn_about_sunday(puzzle)
+    _warn_about(puzzle)
     return _back_to(puzzle)
 
 

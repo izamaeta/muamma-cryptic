@@ -1,4 +1,14 @@
-import { minutesSeconds, motionOk, play } from "./motion.js";
+import {
+  countUp,
+  logoHop,
+  minutesSeconds,
+  motionOk,
+  play,
+  pulse,
+  revealWords,
+  sparkBurst,
+  springIn,
+} from "./motion.js";
 
 export function closeOnBackdrop(dialog) {
   dialog.addEventListener("click", (event) => {
@@ -45,6 +55,13 @@ export function resultWindow(dialog) {
     }
   };
 
+  const setNumber = (selector, value) => {
+    const element = dialog.querySelector(selector);
+    if (!element || typeof value !== "number") return;
+    element.textContent = value;
+    countUp(element, value);
+  };
+
   closeOnBackdrop(dialog);
 
   return {
@@ -53,10 +70,10 @@ export function resultWindow(dialog) {
     fill(data, solved) {
       set(".result-title", solved ? "Tebrikler! Muamma çözüldü" : "Mühür açıldı");
       set(".result-duration", minutesSeconds(data.duration));
-      set(".result-guesses", data.guesses);
-      set(".result-hints", data.hints);
-      set(".result-letters", data.letters);
-      set(".result-streak", data.streak);
+      setNumber(".result-guesses", data.guesses);
+      setNumber(".result-hints", data.hints);
+      setNumber(".result-letters", data.letters);
+      setNumber(".result-streak", data.streak);
 
       const community = dialog.querySelector(".result-community");
       if (community && data.community) {
@@ -67,10 +84,27 @@ export function resultWindow(dialog) {
       dialog.dataset.ready = "1";
     },
 
-    async open() {
+    async open(celebrate) {
       if (dialog.open) return;
       dialog.showModal();
-      await slideIn(dialog);
+      if (!motionOk()) return;
+      if (!celebrate) {
+        await slideIn(dialog);
+        return;
+      }
+
+      const panel = dialog.querySelector(".result-panel");
+      const logo = dialog.querySelector(".result-logo");
+      const share = dialog.querySelector(".result-action:not([hidden])");
+
+      const running = [
+        springIn(panel),
+        logoHop(logo),
+        sparkBurst(dialog.querySelector(".result-logo-wrap")),
+        revealWords(dialog.querySelector(".result-title")),
+      ];
+      if (share) running.push(pulse(share));
+      await Promise.all(running);
     },
   };
 }
