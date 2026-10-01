@@ -593,6 +593,44 @@ the page was worth in search, we would rather not talk about another
 product on our own site. The name appears nowhere on it any more, and a
 test walks the pages to keep it that way.
 
+## The palette
+
+Turquoise is gone. The game is warm paper, ink and a cobalt seal: a page
+of `#F7F2EB`, a card of `#FFF9F0`, `#081F5C` for every word, and `#334EAC`
+for the wax. The values come from the three reference pages in
+`docs/palet-referans/`, applied to the existing tokens rather than copied
+as markup.
+
+The seal is a radial gradient lit from the upper left, and its stops are
+set in the stylesheet rather than on the SVG, so one piece of markup
+serves both themes and both states. The whole seal and the broken one
+carry different gradient ids, since both sit on the same page.
+
+One value departs from the reference: the gradient's middle stop moves
+from 0.45 to 0.25. At 0.45 the "MÜHÜRLÜ" label — small bold text on the
+light part of the wax — came to 3.75:1 on phones and 4.14:1 on desktop,
+short of the 4.5:1 it needs. Moving the stop keeps all three colours and
+the light's direction, darkens the wax under the cap, and brings the label
+to 4.68:1 and 5.65:1. The title, which is large text, passes either way.
+
+Everything else clears AA as drawn, with `#7096D1` used only as a surface,
+never as a text colour, and `#FFF9F0` rather than navy wherever text sits
+on the seal.
+
+The grain is one fixed layer over the viewport and one over the band, so
+scrolling never repaints a document-tall texture, and neither takes
+pointer events. The admin is excluded: it takes the colours and nothing
+else, because it is a tool and the texture would only be in the way.
+
+## The browser's hidden rule
+
+Setting `hidden` on the guess form and the assists did nothing: an author
+`display: flex` outranks the browser's own `[hidden] { display: none }`,
+so both stayed on screen after a puzzle was finished, including on a
+reloaded page. A `[hidden] { display: none !important }` reset fixes it
+for every element at once. It had been wrong since the stylesheet was
+rewritten; a screenshot of the solved state is what showed it.
+
 ## Fitting the tiles on a phone
 
 The tile row is a block with the word groups as inline-flex boxes, and
