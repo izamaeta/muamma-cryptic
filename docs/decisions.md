@@ -230,9 +230,14 @@ page render.
 theme is applied before the first paint; the toggle is wired on
 `DOMContentLoaded`, since the button does not exist yet when the script
 runs. Every `localStorage` access is guarded, because private windows can
-throw. `theme-color` is declared as two media-scoped meta tags, so it
-follows the system theme without JavaScript; a manual override does not
-change the browser chrome.
+throw.
+
+The light palette is the default and the system preference is not read at
+all. Following `prefers-color-scheme` meant that a reader whose phone is
+set to dark never saw the paper the game was designed on, without ever
+having asked for the dark one. Dark is still there, one button away, and
+the choice is remembered. `theme-color` is therefore a single tag matching
+the light band rather than a pair keyed to the system.
 
 Favicons are PNG at 32 and 48 pixels instead of the old SVG, because the
 logo is a raster image.
@@ -621,6 +626,53 @@ The grain is one fixed layer over the viewport and one over the band, so
 scrolling never repaints a document-tall texture, and neither takes
 pointer events. The admin is excluded: it takes the colours and nothing
 else, because it is a tool and the texture would only be in the way.
+
+## The definition highlight on a wrapped line
+
+The highlight used to be a `::before` with `position: absolute; inset: 0`.
+On one line that is fine; on two it is one rectangle stretched over the
+whole inline fragment, covering the gap between the lines and running past
+the end of the shorter one. A multi-word definition on a phone looked
+pasted on at an angle.
+
+It is now the text's own background with `box-decoration-break: clone`, so
+every line fragment gets its own padding, corners and fill. The same goes
+for the three marked parts in the guide, which wrap the same way.
+
+The ink that fills from the left is therefore an animated
+`background-size` rather than a transform. **This is the one place the
+"only transform and opacity" rule is broken**, and it has to be: a
+transform scales the whole element, so on a wrapped definition it would
+sweep across both lines from the first line's left edge instead of filling
+each line from its own. The animation touches a single small inline
+element and runs once per hint. Under `prefers-reduced-motion` it does not
+run at all.
+
+## Keeping the tiles centred
+
+Three things were wrong at once, all found in the browser.
+
+The row is left-aligned only while it overflows, so the start stays
+reachable. But a row could overflow by as little as seven pixels and still
+flip the whole thing to the left, which reads as a centring bug rather
+than as scrolling. The gaps between tiles now close from 4px to 2px once
+the tiles are already at their 20px floor, which is enough to fit twelve
+letters at 360px and fifteen at 430px. What still scrolls genuinely cannot
+fit.
+
+Width changes that did not come from the window were missed entirely: only
+`resize` was listened for, so a card that narrowed for any other reason
+left the tiles at their old size and overflowing without the scroll hint.
+A `ResizeObserver` on the row catches all of it.
+
+The first measurement also runs before the web fonts have settled, so
+`document.fonts.ready` triggers one more pass. Nothing in the size
+calculation depends on the fonts today, but it is a cheap guard against a
+late reflow leaving a stale measurement behind.
+
+Measured at 320, 360, 390 and 430px across single and multi-word answers
+of three to fifteen letters: every row that fits is centred to the pixel,
+wrapped word groups included.
 
 ## The browser's hidden rule
 
