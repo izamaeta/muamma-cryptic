@@ -27,6 +27,29 @@ localhost only.
 The host port for PostgreSQL is 15432 to avoid clashing with a local
 PostgreSQL install on the default port.
 
+## Continuous integration
+
+Every push and pull request runs the suite, the migrations and a Docker
+build. Nothing in the workflow needs a secret: the Postgres credentials
+are fixtures written in the file, the container lives and dies with the
+job, and the image is built and thrown away rather than pushed anywhere.
+
+The tests keep running on SQLite, where they are fast and need no service.
+What SQLite cannot answer is whether the migrations work on the database
+the site actually uses, so the workflow also brings up PostgreSQL 17,
+runs `flask db upgrade` from empty, and then `flask db check` to compare
+the models against what the migrations built. Both were tried against a
+real PostgreSQL 17 before the workflow was written: the chain applies
+cleanly and the check reports no drift, and dropping a column made it exit
+non-zero with the missing column named. It is a step that can actually
+fail, not one that always passes.
+
+The two jobs are separate so they run at the same time and so a red mark
+says which half broke. Dependencies are cached on the requirements files;
+the image build uses the Actions cache, which also needs no credentials.
+
+Nothing is allowed to continue on error, so any failure turns the run red.
+
 ## Data model
 
 Four tables: `puzzles`, `players`, `plays` (one row per player and puzzle,
