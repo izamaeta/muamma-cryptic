@@ -1,30 +1,52 @@
 /* Muamma – "Mühür". Tokens and components follow docs/design.md. */
 
 :root {
-  --bg: #f2f6fa;
-  --card: #ffffff;
-  --card-border: #d3deec;
-  --chip: #e7eef6;
-  --ink: #0b1f5c;
-  --muted: #46557a;
-  --navy: #0b1f5c;
-  --navy-tint: #dce3f6;
-  --turquoise: #1fa5a3;
-  --turquoise-deep: #178a88;
-  --turquoise-light: #bdebea;
+  --bg: #f7f2eb;
+  --card: #fff9f0;
+  --card-border: #e6dccb;
+  --chip: #d0e3ff;
+  --ink: #081f5c;
+  --muted: #4a5578;
+  --navy: #081f5c;
+  --blue: #334eac;
+  --blue-light: #7096d1;
+  --blue-deep: #1f357f;
+  --sky: #bad6eb;
   --red: #b31b1b;
   --red-ink: #b31b1b;
   --seal-ring: #b31b1b;
-  --band-sealed: #0b1f5c;
-  --fodder: #0b1f5c;
+  --fodder: #334eac;
+  --field-bg: #fffdf9;
 
-  --tile-border: #c9d6ee;
-  --tile-fill: #f7fafd;
-  --tile-typed-border: var(--turquoise-deep);
-  --tile-ring: var(--turquoise-light);
-  --tile-solved: var(--turquoise);
-  --tile-solved-ring: #8fd8d6;
-  --tile-solved-ink: var(--navy);
+  --card-shadow:
+    0 24px 50px -24px rgb(8 31 92 / 45%),
+    0 2px 0 rgb(255 255 255 / 70%) inset;
+
+  --tile-border: #d9cdba;
+  --tile-fill: linear-gradient(165deg, #fffdf9 0%, #f6efe3 100%);
+  --tile-shadow: inset 0 2px 3px rgb(8 31 92 / 8%);
+  --tile-typed-border: var(--blue);
+  --tile-typed-fill: linear-gradient(160deg, #ffffff 0%, #fffaf2 50%, #f3ece0 100%);
+  --tile-typed-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 95%),
+    inset 0 0 0 4px #d0e3ff,
+    inset 0 -3px 5px rgb(8 31 92 / 8%),
+    0 2px 5px rgb(8 31 92 / 8%);
+  --tile-solved-fill:
+    linear-gradient(160deg, #7096d1 0%, #4563bd 38%, #334eac 70%, #283f91 100%);
+  --tile-solved-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 50%),
+    inset 0 -4px 6px rgb(4 16 58 / 25%),
+    inset 0 0 0 4px rgb(255 255 255 / 16%),
+    0 3px 8px rgb(8 31 92 / 25%);
+  --tile-solved-ink: #fff9f0;
+
+  --band-sealed-grad:
+    radial-gradient(70% 85% at 50% 108%, #2a4497 0%, #15307a 38%, #081f5c 64%, #061748 100%);
+  --seal-glow: radial-gradient(60% 55% at 50% 100%, rgb(112 150 209 / 38%) 0%, transparent 70%);
+
+  --grain-blend: multiply;
+  --grain-opacity: 0.18;
 
   --serif: "Fraunces", Georgia, "Times New Roman", serif;
   --sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -33,115 +55,166 @@
 }
 
 [data-state="sealed"] {
-  --band: #0b1f5c;
-  --band-ink: #ffffff;
-  --band-accent: #3cc7c3;
-  --seal: #1fa5a3;
-  --seal-line: #178a88;
-  --seal-ink: #0b1f5c;
-  --def-bg: var(--navy-tint);
-  --def-ink: var(--navy);
+  --band-grad: var(--band-sealed-grad);
+  --band-ink: #fff9f0;
+  --band-accent: var(--sky);
+  --seal-light: #7096d1;
+  --seal-mid: #334eac;
+  --seal-deep: #1f357f;
+  --seal-line: #22367f;
+  --seal-ink: #fff9f0;
+  --def-bg: #d0e3ff;
+  --def-ink: #081f5c;
 }
 
 [data-state="opened"] {
-  --band: #1fa5a3;
-  --band-ink: #0b1f5c;
-  --band-accent: #0b1f5c;
-  --seal: #0b1f5c;
-  --seal-line: #2b4296;
-  --seal-ink: #ffffff;
-  --def-bg: var(--turquoise-light);
-  --def-ink: var(--navy);
+  --band-grad:
+    radial-gradient(120% 90% at 50% 100%, #d0e3ff 0%, #bad6eb 50%, #a3c4e0 100%);
+  --band-ink: #081f5c;
+  --band-accent: #081f5c;
+  --seal-light: #334eac;
+  --seal-mid: #081f5c;
+  --seal-deep: #04103a;
+  --seal-line: #334eac;
+  --seal-ink: #fff9f0;
+  --def-bg: #d0e3ff;
+  --def-ink: #081f5c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #07122f;
-    --card: #0f1d45;
-    --card-border: #22336b;
-    --chip: #1b2a5a;
-    --ink: #e9eefb;
-    --muted: #a9b6d6;
+    --bg: #050f2e;
+    --card: #0c1a45;
+    --card-border: #1d2e66;
+    --chip: #162a66;
+    --ink: #f7f2eb;
+    --muted: #bad6eb;
     --red-ink: #f07a73;
-
-    --tile-border: #22336b;
-    --tile-fill: #0b1738;
-    --tile-typed-border: #3cc7c3;
-    --tile-ring: #178a88;
-    --tile-solved: #3cc7c3;
-    --tile-solved-ring: #178a88;
-    --tile-solved-ink: #07122f;
-    --band-sealed: #050c26;
     --fodder: #8fa6ff;
+    --field-bg: #0f1f52;
+
+    --card-shadow:
+      0 24px 50px -24px rgb(0 0 0 / 80%),
+      0 1px 0 rgb(255 255 255 / 6%) inset;
+
+    --tile-border: #1d2e66;
+    --tile-fill: linear-gradient(165deg, #0f1f52 0%, #0a163e 100%);
+    --tile-shadow: inset 0 2px 3px rgb(0 0 0 / 35%);
+    --tile-typed-border: #334eac;
+    --tile-typed-fill: linear-gradient(160deg, #1a2d68 0%, #0f1f52 55%, #0b1844 100%);
+    --tile-typed-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 16%),
+      inset 0 0 0 4px #1d2e66,
+      inset 0 -3px 5px rgb(0 0 0 / 35%),
+      0 2px 5px rgb(0 0 0 / 35%);
+    --tile-solved-fill:
+      linear-gradient(160deg, #8aa9db 0%, #7096d1 45%, #5c84c6 100%);
+    --tile-solved-shadow:
+      inset 0 2px 0 rgb(255 255 255 / 45%),
+      inset 0 -4px 6px rgb(4 16 58 / 30%),
+      inset 0 0 0 4px rgb(255 255 255 / 18%),
+      0 3px 8px rgb(0 0 0 / 45%);
+    --tile-solved-ink: #081f5c;
+
+    --band-sealed-grad:
+      radial-gradient(70% 85% at 50% 108%, #1a3480 0%, #0c1f5a 40%, #061440 70%, #030a26 100%);
+    --seal-glow: radial-gradient(60% 55% at 50% 100%, rgb(112 150 209 / 28%) 0%, transparent 70%);
+
+    --grain-blend: screen;
+    --grain-opacity: 0.3;
 
     color-scheme: dark;
   }
 
   :root:not([data-theme="light"]) [data-state="sealed"] {
-    --band: #050c26;
-    --seal: #1fa5a3;
-    --seal-line: #178a88;
-    --def-bg: #22336b;
-    --def-ink: #e9eefb;
+    --band-ink: #f7f2eb;
+    --seal-deep: #1a2c6e;
+    --seal-line: #1a2c6e;
+    --def-bg: #334eac;
+    --def-ink: #fff9f0;
   }
 
   :root:not([data-theme="light"]) [data-state="opened"] {
-    --band: #0e4f57;
-    --band-ink: #e9eefb;
-    --band-accent: #3cc7c3;
-    --seal: #06103a;
-    --seal-line: #1d2e6e;
-    --seal-ink: #e9eefb;
-    --def-bg: #3cc7c3;
-    --def-ink: #07122f;
+    --band-grad:
+      radial-gradient(120% 90% at 50% 100%, #4a6abf 0%, #334eac 50%, #27407f 100%);
+    --band-ink: #f7f2eb;
+    --band-accent: #f7f2eb;
+    --def-bg: #334eac;
+    --def-ink: #fff9f0;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #07122f;
-  --card: #0f1d45;
-  --card-border: #22336b;
-  --chip: #1b2a5a;
-  --ink: #e9eefb;
-  --muted: #a9b6d6;
+  --bg: #050f2e;
+  --card: #0c1a45;
+  --card-border: #1d2e66;
+  --chip: #162a66;
+  --ink: #f7f2eb;
+  --muted: #bad6eb;
   --red-ink: #f07a73;
-
-  --tile-border: #22336b;
-  --tile-fill: #0b1738;
-  --tile-typed-border: #3cc7c3;
-  --tile-ring: #178a88;
-  --tile-solved: #3cc7c3;
-  --tile-solved-ring: #178a88;
-  --tile-solved-ink: #07122f;
-  --band-sealed: #050c26;
   --fodder: #8fa6ff;
+  --field-bg: #0f1f52;
+
+  --card-shadow:
+    0 24px 50px -24px rgb(0 0 0 / 80%),
+    0 1px 0 rgb(255 255 255 / 6%) inset;
+
+  --tile-border: #1d2e66;
+  --tile-fill: linear-gradient(165deg, #0f1f52 0%, #0a163e 100%);
+  --tile-shadow: inset 0 2px 3px rgb(0 0 0 / 35%);
+  --tile-typed-border: #334eac;
+  --tile-typed-fill: linear-gradient(160deg, #1a2d68 0%, #0f1f52 55%, #0b1844 100%);
+  --tile-typed-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 16%),
+    inset 0 0 0 4px #1d2e66,
+    inset 0 -3px 5px rgb(0 0 0 / 35%),
+    0 2px 5px rgb(0 0 0 / 35%);
+  --tile-solved-fill:
+    linear-gradient(160deg, #8aa9db 0%, #7096d1 45%, #5c84c6 100%);
+  --tile-solved-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 45%),
+    inset 0 -4px 6px rgb(4 16 58 / 30%),
+    inset 0 0 0 4px rgb(255 255 255 / 18%),
+    0 3px 8px rgb(0 0 0 / 45%);
+  --tile-solved-ink: #081f5c;
+
+  --band-sealed-grad:
+    radial-gradient(70% 85% at 50% 108%, #1a3480 0%, #0c1f5a 40%, #061440 70%, #030a26 100%);
+  --seal-glow: radial-gradient(60% 55% at 50% 100%, rgb(112 150 209 / 28%) 0%, transparent 70%);
+
+  --grain-blend: screen;
+  --grain-opacity: 0.3;
 
   color-scheme: dark;
 }
 
 :root[data-theme="dark"] [data-state="sealed"] {
-  --band: #050c26;
-  --seal: #1fa5a3;
-  --seal-line: #178a88;
-  --def-bg: #22336b;
-  --def-ink: #e9eefb;
+  --band-ink: #f7f2eb;
+  --seal-deep: #1a2c6e;
+  --seal-line: #1a2c6e;
+  --def-bg: #334eac;
+  --def-ink: #fff9f0;
 }
 
 :root[data-theme="dark"] [data-state="opened"] {
-  --band: #0e4f57;
-  --band-ink: #e9eefb;
-  --band-accent: #3cc7c3;
-  --seal: #06103a;
-  --seal-line: #1d2e6e;
-  --seal-ink: #e9eefb;
-  --def-bg: #3cc7c3;
-  --def-ink: #07122f;
+  --band-grad:
+    radial-gradient(120% 90% at 50% 100%, #4a6abf 0%, #334eac 50%, #27407f 100%);
+  --band-ink: #f7f2eb;
+  --band-accent: #f7f2eb;
+  --def-bg: #334eac;
+  --def-ink: #fff9f0;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* author display rules outrank the browser's own [hidden] rule, which left
+   the guess form and the assists on screen after a puzzle was finished */
+[hidden] {
+  display: none !important;
 }
 
 body {
@@ -182,7 +255,7 @@ h3 {
 
 a {
   color: var(--ink);
-  text-decoration-color: var(--turquoise-deep);
+  text-decoration-color: var(--blue);
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
@@ -192,7 +265,7 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 3px solid var(--turquoise-deep);
+  outline: 3px solid var(--blue);
   outline-offset: 2px;
 }
 
@@ -222,7 +295,7 @@ a:hover {
   --seal-top: var(--seal-top-sealed);
   --cap-offset: 0.181;
   position: relative;
-  background: var(--band);
+  background: var(--band-grad);
   color: var(--band-ink);
 }
 
@@ -230,7 +303,7 @@ a:hover {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--band-sealed);
+  background: var(--band-sealed-grad);
   opacity: 0;
   pointer-events: none;
 }
@@ -244,6 +317,14 @@ a:hover {
   inset: 0;
   z-index: 0;
   overflow: hidden;
+}
+
+.seal-layer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--seal-glow);
+  pointer-events: none;
 }
 
 .has-band .band {
@@ -444,8 +525,31 @@ a:hover {
   animation: seal-rise 1.6s ease-out both;
 }
 
-.seal-body {
-  fill: var(--seal);
+/* the wax takes its light from the top left; the stops are driven by the
+   theme and the page state, so the gradient follows the palette */
+.seal-stop-light {
+  stop-color: var(--seal-light);
+}
+
+.seal-stop-mid {
+  stop-color: var(--seal-mid);
+}
+
+.seal-stop-deep {
+  stop-color: var(--seal-deep);
+}
+
+.seal-whole .seal-body {
+  fill: url("#muhur-g");
+}
+
+.seal-broken .seal-body {
+  fill: url("#muhur-kirik-g");
+}
+
+/* a sliver of light just under the rings, as if they were pressed in */
+.seal-emboss {
+  stroke: rgb(255 255 255 / 30%);
 }
 
 .seal-ring {
@@ -454,6 +558,11 @@ a:hover {
 
 .seal-line {
   stroke: var(--seal-line);
+}
+
+/* the wax thickens at the rim */
+.seal-edge {
+  stroke: rgb(0 0 0 / 14%);
 }
 
 [data-state="sealed"] .seal-broken,
@@ -530,7 +639,7 @@ a:hover {
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: 28px;
-  box-shadow: 0 14px 34px rgb(11 31 92 / 8%);
+  box-shadow: var(--card-shadow);
 }
 
 .chips {
@@ -627,9 +736,11 @@ a:hover {
   aspect-ratio: 27 / 29;
   font-family: var(--serif);
   font-weight: 600;
+  /* a pressed-in glaze until a letter lands on it */
   background: var(--tile-fill);
   border: 2px solid var(--tile-border);
   border-radius: 10px;
+  box-shadow: var(--tile-shadow);
 }
 
 .tile .letter {
@@ -640,10 +751,9 @@ a:hover {
 }
 
 .tile.filled {
+  background: var(--tile-typed-fill);
   border-color: var(--tile-typed-border);
-  box-shadow:
-    inset 0 0 0 2px var(--tile-fill),
-    inset 0 0 0 4px var(--tile-ring);
+  box-shadow: var(--tile-typed-shadow);
 }
 
 .tile.given {
@@ -652,11 +762,9 @@ a:hover {
 
 .tile.solved {
   color: var(--tile-solved-ink);
-  background: var(--tile-solved);
-  border-color: var(--tile-solved);
-  box-shadow:
-    inset 0 0 0 2px var(--tile-solved),
-    inset 0 0 0 4px var(--tile-solved-ring);
+  background: var(--tile-solved-fill);
+  border-color: var(--blue-deep);
+  box-shadow: var(--tile-solved-shadow);
   animation: tile-bounce 420ms ease-out both;
 }
 
@@ -751,13 +859,13 @@ a:hover {
   font-weight: 700;
   color: var(--ink);
   text-transform: uppercase;
-  background: var(--tile-fill);
+  background: var(--field-bg);
   border: 2px solid var(--card-border);
   border-radius: 14px;
 }
 
 .guess-form input:focus {
-  border-color: var(--turquoise-deep);
+  border-color: var(--blue);
 }
 
 button {
@@ -773,7 +881,7 @@ button {
 }
 
 button:hover {
-  border-color: var(--turquoise-deep);
+  border-color: var(--blue);
 }
 
 button.primary {
@@ -789,8 +897,8 @@ button.primary:hover {
 
 :root[data-theme="dark"] button.primary {
   color: var(--navy);
-  background: #3cc7c3;
-  border-color: #3cc7c3;
+  background: var(--blue-light);
+  border-color: var(--blue-light);
 }
 
 .helpers {
@@ -956,7 +1064,7 @@ button.primary:hover {
 
 .chip-solved {
   color: var(--ink);
-  border: 1px solid var(--turquoise-deep);
+  border: 1px solid var(--blue);
 }
 
 .puzzle-nav {
@@ -1049,7 +1157,7 @@ button.primary:hover {
   left: 50%;
   width: 10px;
   height: 10px;
-  background: var(--turquoise);
+  background: var(--blue);
   border-radius: 50%;
 }
 
@@ -1131,8 +1239,8 @@ button.primary:hover {
 
 :root[data-theme="dark"] .result-action {
   color: var(--navy);
-  background: #3cc7c3;
-  border-color: #3cc7c3;
+  background: var(--blue-light);
+  border-color: var(--blue-light);
 }
 
 .result-close {
@@ -1187,7 +1295,7 @@ button.primary:hover {
 
 :root[data-theme="dark"] .toast {
   color: var(--navy);
-  background: #3cc7c3;
+  background: var(--blue-light);
 }
 
 /* Busy state */
@@ -1290,6 +1398,11 @@ button.primary:hover {
 }
 
 /* Admin */
+
+/* the admin takes the new colours, but none of the texture or depth */
+.admin .band {
+  background: var(--navy);
+}
 
 .admin .site-header {
   display: flex;
@@ -1680,7 +1793,7 @@ button.primary:hover {
 }
 
 .anatomy-clue .part.lit {
-  outline: 3px solid var(--turquoise-deep);
+  outline: 3px solid var(--blue);
   outline-offset: 2px;
 }
 
@@ -1746,8 +1859,8 @@ button.primary:hover {
 
 :root[data-theme="dark"] .tab[aria-selected="true"] {
   color: var(--navy);
-  background: #3cc7c3;
-  border-color: #3cc7c3;
+  background: var(--blue-light);
+  border-color: var(--blue-light);
 }
 
 .type-card {
@@ -1781,7 +1894,7 @@ button.primary:hover {
 }
 
 .type-practice a:hover {
-  border-color: var(--turquoise-deep);
+  border-color: var(--blue);
 }
 
 .chip-row {
@@ -1823,7 +1936,7 @@ button.primary:hover {
   padding: 0.6rem 0.8rem;
   font: inherit;
   color: var(--ink);
-  background: var(--tile-fill);
+  background: var(--field-bg);
   border: 2px solid var(--card-border);
   border-radius: 14px;
 }
@@ -2069,4 +2182,34 @@ button.primary:hover {
     gap: 0.9rem;
     align-items: start;
   }
+}
+
+/* Grain
+   A fixed layer over the page and one over the band. Fixed so scrolling
+   never has to repaint a document-tall texture. Never on the admin. */
+
+body::after,
+.band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.04 0 0 0 0 0.12 0 0 0 0 0.36 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: var(--grain-opacity);
+  mix-blend-mode: var(--grain-blend);
+  pointer-events: none;
+}
+
+body::after {
+  position: fixed;
+  z-index: 5;
+}
+
+.band::after {
+  z-index: 1;
+}
+
+body.admin::after,
+.admin .band::after {
+  content: none;
 }
