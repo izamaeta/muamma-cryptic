@@ -251,6 +251,7 @@ if (section) {
 
   const TILE_MIN = 20;
   const TILE_GAP = 4;
+  const TIGHT_GAP = 2;
 
   function fitTiles() {
     // measure without the scrolling state, or the row would stay wide
@@ -265,15 +266,24 @@ if (section) {
     const fits = (room - (longest - 1) * TILE_GAP) / longest;
     const size = Math.max(TILE_MIN, Math.min(max, fits));
 
+    // at the floor a few pixels can be the difference between a centred row
+    // and a scrolling one, so close the gaps before giving up on fitting
+    const gap = size > TILE_MIN ? TILE_GAP : TIGHT_GAP;
+
+    tileBox.style.setProperty("--tile-gap", `${gap}px`);
     tileBox.style.setProperty("--tile-size", `${size.toFixed(1)}px`);
     tileBox.style.setProperty("--tile-font", `${(size * 0.48).toFixed(1)}px`);
 
+    // left-align only while the row really overflows; otherwise it stays centred
     if (tileBox.scrollWidth > tileBox.clientWidth + 1) {
       tileBox.classList.add("scrollable");
     }
   }
 
-  window.addEventListener("resize", fitTiles);
+  // the card can change width without the window doing so, and a late font
+  // can shift the layout after the first measurement
+  new ResizeObserver(fitTiles).observe(tileBox);
+  if (document.fonts) document.fonts.ready.then(fitTiles);
   fitTiles();
 
   input.addEventListener("input", () => {

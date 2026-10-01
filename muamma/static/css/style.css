@@ -81,69 +81,6 @@
   --def-ink: #081f5c;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #050f2e;
-    --card: #0c1a45;
-    --card-border: #1d2e66;
-    --chip: #162a66;
-    --ink: #f7f2eb;
-    --muted: #bad6eb;
-    --red-ink: #f07a73;
-    --fodder: #8fa6ff;
-    --field-bg: #0f1f52;
-
-    --card-shadow:
-      0 24px 50px -24px rgb(0 0 0 / 80%),
-      0 1px 0 rgb(255 255 255 / 6%) inset;
-
-    --tile-border: #1d2e66;
-    --tile-fill: linear-gradient(165deg, #0f1f52 0%, #0a163e 100%);
-    --tile-shadow: inset 0 2px 3px rgb(0 0 0 / 35%);
-    --tile-typed-border: #334eac;
-    --tile-typed-fill: linear-gradient(160deg, #1a2d68 0%, #0f1f52 55%, #0b1844 100%);
-    --tile-typed-shadow:
-      inset 0 2px 0 rgb(255 255 255 / 16%),
-      inset 0 0 0 4px #1d2e66,
-      inset 0 -3px 5px rgb(0 0 0 / 35%),
-      0 2px 5px rgb(0 0 0 / 35%);
-    --tile-solved-fill:
-      linear-gradient(160deg, #8aa9db 0%, #7096d1 45%, #5c84c6 100%);
-    --tile-solved-shadow:
-      inset 0 2px 0 rgb(255 255 255 / 45%),
-      inset 0 -4px 6px rgb(4 16 58 / 30%),
-      inset 0 0 0 4px rgb(255 255 255 / 18%),
-      0 3px 8px rgb(0 0 0 / 45%);
-    --tile-solved-ink: #081f5c;
-
-    --band-sealed-grad:
-      radial-gradient(70% 85% at 50% 108%, #1a3480 0%, #0c1f5a 40%, #061440 70%, #030a26 100%);
-    --seal-glow: radial-gradient(60% 55% at 50% 100%, rgb(112 150 209 / 28%) 0%, transparent 70%);
-
-    --grain-blend: screen;
-    --grain-opacity: 0.3;
-
-    color-scheme: dark;
-  }
-
-  :root:not([data-theme="light"]) [data-state="sealed"] {
-    --band-ink: #f7f2eb;
-    --seal-deep: #1a2c6e;
-    --seal-line: #1a2c6e;
-    --def-bg: #334eac;
-    --def-ink: #fff9f0;
-  }
-
-  :root:not([data-theme="light"]) [data-state="opened"] {
-    --band-grad:
-      radial-gradient(120% 90% at 50% 100%, #4a6abf 0%, #334eac 50%, #27407f 100%);
-    --band-ink: #f7f2eb;
-    --band-accent: #f7f2eb;
-    --def-bg: #334eac;
-    --def-ink: #fff9f0;
-  }
-}
-
 :root[data-theme="dark"] {
   --bg: #050f2e;
   --card: #0c1a45;
@@ -671,25 +608,19 @@ a:hover {
 }
 
 .definition {
-  position: relative;
-  z-index: 0;
   padding: 0.05em 0.25em;
   color: var(--def-ink);
-  background: transparent;
   border-radius: 8px;
+  /* each line of a wrapped definition is painted on its own, instead of
+     one box stretched over the whole inline fragment */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background-image: linear-gradient(var(--def-bg), var(--def-bg));
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
 }
 
-.definition::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--def-bg);
-  border-radius: 8px;
-  transform-origin: left center;
-}
-
-.definition.ink::before {
+.definition.ink {
   animation: ink-fill 520ms ease-out both;
 }
 
@@ -721,7 +652,7 @@ a:hover {
 .tile-group {
   display: inline-flex;
   max-width: 100%;
-  gap: 0.25rem;
+  gap: var(--tile-gap, 0.25rem);
   margin: 0.25rem 0.35rem;
   vertical-align: top;
 }
@@ -1557,13 +1488,15 @@ button.primary:hover {
   }
 }
 
+/* the one place a size is animated rather than transform or opacity: a
+   transform cannot fill a wrapped line from its own left edge */
 @keyframes ink-fill {
   from {
-    transform: scaleX(0);
+    background-size: 0% 100%;
   }
 
   to {
-    transform: scaleX(1);
+    background-size: 100% 100%;
   }
 }
 
@@ -1676,9 +1609,13 @@ button.primary:hover {
   color: var(--def-ink);
   background: var(--def-bg);
   border-radius: 8px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .part-gosterge {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
   text-decoration: underline;
   text-decoration-color: var(--red-ink);
   text-decoration-thickness: 3px;
@@ -1689,6 +1626,8 @@ button.primary:hover {
   padding: 0.05em 0.2em;
   border: 2px dashed var(--fodder);
   border-radius: 6px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .role {

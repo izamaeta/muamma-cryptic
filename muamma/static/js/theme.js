@@ -18,9 +18,8 @@ function applyTheme(theme) {
 }
 
 function isDark() {
-  const chosen = root.dataset.theme;
-  if (chosen) return chosen === "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  // light unless the reader has asked for dark; the system is not consulted
+  return root.dataset.theme === "dark";
 }
 
 applyTheme(storedTheme());
