@@ -509,6 +509,16 @@ def glossary_groups():
     return groups
 
 
+def example_answers():
+    """Answers already printed with their solutions on the guide page."""
+    return {
+        kind["example"]["answer"]
+        for group in GROUPS
+        for kind in group["types"]
+        if kind["example"]
+    }
+
+
 def all_indicators():
     return [
         word for group in GROUPS for kind in group["types"] for word in kind["indicators"]

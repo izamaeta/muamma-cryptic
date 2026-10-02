@@ -1,4 +1,6 @@
-from datetime import timedelta
+import json
+from datetime import date, timedelta
+from pathlib import Path
 
 import click
 from flask.cli import with_appcontext
@@ -7,7 +9,9 @@ from sqlalchemy import select
 from muamma import clock
 from muamma.extensions import db
 from muamma.models import Admin, Puzzle
+from muamma.puzzles import guide_example_warning
 from muamma.security import hash_password
+from muamma.text import normalize_answer
 
 DEMO_DAILY = [
     (
@@ -110,3 +114,157 @@ def create_admin(email, password):
     db.session.add(Admin(email=email, password_hash=hash_password(password)))
     db.session.commit()
     click.echo(f"Created admin {email}.")
+
+# Everything a puzzle is, and nothing about who played it: plays, events and
+# players stay in the database they were made in.
+TRANSFER_FIELDS = (
+    "kind",
+    "status",
+    "clue",
+    "definition",
+    "answer",
+    "enumeration",
+    "hints",
+    "explanation",
+    "technique",
+    "difficulty",
+)
+
+
+def puzzle_record(puzzle: Puzzle) -> dict:
+    record = {name: getattr(puzzle, name) for name in TRANSFER_FIELDS}
+    # Kept for the reader's benefit. The import decides the dates itself.
+    record["publish_date"] = (
+        puzzle.publish_date.isoformat() if puzzle.publish_date else None
+    )
+    return record
+
+
+def puzzle_fingerprint(kind: str, clue: str, answer: str) -> tuple[str, str, str]:
+    """What makes two puzzles the same puzzle: the clue and its answer."""
+    return (kind, " ".join(clue.split()).casefold(), normalize_answer(answer))
+
+
+@click.command("export-puzzles")
+@click.argument("path", type=click.Path(dir_okay=False, writable=True))
+@with_appcontext
+def export_puzzles(path):
+    """Write every puzzle to a JSON file."""
+    puzzles = db.session.scalars(
+        select(Puzzle).order_by(Puzzle.kind, Puzzle.publish_date, Puzzle.id)
+    )
+    records = [puzzle_record(puzzle) for puzzle in puzzles]
+    Path(path).write_text(
+        json.dumps(records, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
+    dailies = sum(1 for record in records if record["kind"] == "daily")
+    click.echo(
+        f"{len(records)} bulmaca yazıldı: {dailies} günlük, "
+        f"{len(records) - dailies} tadımlık. Dosya: {path}"
+    )
+
+
+def read_records(path: str) -> list[dict]:
+    try:
+        records = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise click.ClickException(f"Dosya okunamadı: {error}") from error
+    if not isinstance(records, list):
+        raise click.ClickException("Dosyanın en üstünde bir bulmaca listesi bekleniyor.")
+
+    required = set(TRANSFER_FIELDS) - {"definition", "status", "hints", "difficulty"}
+    for number, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            raise click.ClickException(f"{number}. kayıt bir nesne değil.")
+        missing = sorted(required - set(record))
+        if missing:
+            raise click.ClickException(
+                f"{number}. kayıtta eksik alanlar: {', '.join(missing)}"
+            )
+        if record["kind"] not in ("daily", "practice"):
+            raise click.ClickException(
+                f"{number}. kaydın türü tanınmıyor: {record['kind']}"
+            )
+    return records
+
+
+def free_days_from(first_day: date):
+    """Days with no puzzle on them, starting at first_day."""
+    taken = set(
+        db.session.scalars(
+            select(Puzzle.publish_date).where(Puzzle.publish_date >= first_day)
+        )
+    )
+    day = first_day
+    while True:
+        if day not in taken:
+            yield day
+        day += timedelta(days=1)
+
+
+@click.command("import-puzzles")
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--start",
+    required=True,
+    metavar="YYYY-MM-DD",
+    help="Günlükler bu tarihten itibaren boş günlere yerleşir.",
+)
+@click.option("--dry-run", is_flag=True, help="Ne olacağını yaz, hiçbir şey kaydetme.")
+@with_appcontext
+def import_puzzles(path, start, dry_run):
+    """Add puzzles from a JSON file written by export-puzzles."""
+    try:
+        first_day = date.fromisoformat(start)
+    except ValueError:
+        raise click.BadParameter(
+            "YYYY-MM-DD biçiminde bir tarih ver.", param_hint="--start"
+        ) from None
+
+    records = read_records(path)
+    seen = {
+        puzzle_fingerprint(kind, clue, answer)
+        for kind, clue, answer in db.session.execute(
+            select(Puzzle.kind, Puzzle.clue, Puzzle.answer)
+        ).all()
+    }
+    days = free_days_from(first_day)
+
+    added = skipped = 0
+    for record in records:
+        fingerprint = puzzle_fingerprint(
+            record["kind"], record["clue"], record["answer"]
+        )
+        if fingerprint in seen:
+            skipped += 1
+            click.echo(f"  atlandı (zaten var): {record['answer']} – {record['clue']}")
+            continue
+        seen.add(fingerprint)
+
+        fields = {name: record.get(name) for name in TRANSFER_FIELDS}
+        fields["status"] = record.get("status") or "draft"
+        fields["hints"] = record.get("hints") or []
+        fields["difficulty"] = record.get("difficulty") or 2
+        if record["kind"] == "daily":
+            fields["publish_date"] = next(days)
+            where = fields["publish_date"].isoformat()
+        else:
+            fields["publish_date"] = None
+            where = "tadımlık"
+
+        db.session.add(Puzzle(**fields))
+        added += 1
+        click.echo(f"  {where}: {record['answer']} – {record['clue']}")
+
+        warning = guide_example_warning(record["answer"])
+        if warning:
+            click.echo(f"    uyarı: {warning}")
+
+    if dry_run:
+        db.session.rollback()
+        click.echo(f"Deneme: {added} bulmaca eklenecek, {skipped} atlanacak.")
+        return
+
+    db.session.commit()
+    click.echo(f"{added} bulmaca eklendi, {skipped} atlandı.")

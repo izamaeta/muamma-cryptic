@@ -17,6 +17,7 @@ from muamma.admin import bp
 from muamma.admin.forms import LoginForm, PuzzleForm
 from muamma.admin.services import (
     STOCK_WARNING_DAYS,
+    guide_answer_warning,
     is_locked,
     lock_fields,
     locked_ids,
@@ -40,7 +41,12 @@ BACK_PAGES = {"dashboard": "admin.dashboard", "puzzles": "admin.puzzles"}
 
 def _warn_about(puzzle):
     """Things worth saying after a save, none of which block it."""
-    for message in (sunday_warning(puzzle), long_word_warning(puzzle)):
+    warnings = (
+        sunday_warning(puzzle),
+        long_word_warning(puzzle),
+        guide_answer_warning(puzzle),
+    )
+    for message in warnings:
         if message:
             flash(message)
 

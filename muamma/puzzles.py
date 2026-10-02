@@ -5,6 +5,7 @@ from datetime import date
 from sqlalchemy import select
 
 from muamma.extensions import db
+from muamma import guide
 from muamma.community import community_line
 from muamma.gameplay import wrong_guesses
 from muamma.models import Play, Puzzle
@@ -63,6 +64,17 @@ def practice_techniques() -> set[str]:
             .distinct()
         )
     )
+
+
+def guide_example_warning(answer: str) -> str | None:
+    """The guide prints these answers with their solutions."""
+    wanted = normalize_answer(answer)
+    if any(wanted == normalize_answer(known) for known in guide.example_answers()):
+        return (
+            f"{turkish_upper(answer.strip())} rehber sayfasında çözümüyle birlikte "
+            "duruyor; oyuncular cevabı orada görebilir."
+        )
+    return None
 
 
 def is_sunday_puzzle(puzzle: Puzzle) -> bool:

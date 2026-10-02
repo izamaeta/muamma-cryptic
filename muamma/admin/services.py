@@ -5,7 +5,12 @@ from sqlalchemy.exc import IntegrityError
 
 from muamma.extensions import db
 from muamma.models import Play, Puzzle
-from muamma.puzzles import answer_length, enumeration_parts, is_sunday_puzzle
+from muamma.puzzles import (
+    answer_length,
+    enumeration_parts,
+    guide_example_warning,
+    is_sunday_puzzle,
+)
 from muamma.text import normalize_answer, turkish_upper
 
 STOCK_WARNING_DAYS = 7
@@ -209,3 +214,7 @@ def save_puzzle(form, puzzle: Puzzle | None, today: date) -> Puzzle | None:
         form.publish_date.errors.append("Bu tarihte başka bir bulmaca var.")
         return None
     return puzzle
+
+def guide_answer_warning(puzzle: Puzzle) -> str | None:
+    """The guide page gives away its own examples."""
+    return guide_example_warning(puzzle.answer)
