@@ -41,8 +41,12 @@ def form_data(**overrides):
     return data
 
 
-def create(client, **overrides):
-    return client.post("/admin/puzzles/new", data=form_data(**overrides))
+def create(client, follow_redirects=False, **overrides):
+    return client.post(
+        "/admin/puzzles/new",
+        data=form_data(**overrides),
+        follow_redirects=follow_redirects,
+    )
 
 
 def all_puzzles():
@@ -138,3 +142,34 @@ def test_dashboard_counts_consecutive_stock(admin_client):
         add_puzzle(publish_date=TODAY + timedelta(days=offset), answer=answer)
     html = admin_client.get("/admin/").get_data(as_text=True)
     assert "2 gün" in html
+
+def test_saving_a_guide_example_warns_but_succeeds(admin_client):
+    """ARI is solved line by line on the guide page."""
+    response = create(
+        admin_client,
+        answer="arı",
+        enumeration="3",
+        follow_redirects=True,
+    )
+    html = response.get_data(as_text=True)
+
+    assert "Bulmaca kaydedildi." in html
+    assert "rehber sayfasında" in html
+    [puzzle] = all_puzzles()
+    assert puzzle.answer == "ARI"
+
+
+def test_an_answer_the_guide_does_not_use_is_saved_quietly(admin_client):
+    response = create(
+        admin_client,
+        clue="Bozuk kalem, söz demek",
+        definition="söz",
+        answer="kelam",
+        enumeration="5",
+        technique="anagram",
+        follow_redirects=True,
+    )
+    html = response.get_data(as_text=True)
+
+    assert "Bulmaca kaydedildi." in html
+    assert "rehber sayfasında" not in html
