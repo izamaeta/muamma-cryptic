@@ -826,3 +826,158 @@ cookie with an anonymous player id and CSRF token, gameplay events tied
 to that id, and IP addresses only inside short-lived rate limit counters.
 It is not a legal review; KVKK obligations should be checked before
 launch.
+## The production stack
+
+`compose.prod.yaml` is a separate file rather than an override on
+`compose.yaml`. The two stacks differ in almost every line that matters —
+what is published, what restarts, what logs, what else runs — and an
+override that quietly inherits a published database port is exactly the
+mistake worth making impossible.
+
+Caddy stands in front. It gets and renews the certificate, compresses,
+and serves `/static/*` from the files on disk without waking Python;
+everything else goes to gunicorn. Only Caddy publishes ports, 80 and 443.
+PostgreSQL and Redis publish nothing at all: they are reachable over the
+compose network by name and have no door to the outside. The dev stack
+still binds them to `127.0.0.1` for a `psql` session, which is the one
+place that convenience is worth it.
+
+Every service has `restart: unless-stopped`, a healthcheck where there is
+something cheap to ask, and `json-file` logging capped at three ten
+megabyte files. The web healthcheck fetches `/robots.txt` because it is
+the only page that touches neither the database nor the session.
+
+Images are the ones that already publish arm64: `python:3.14-slim`,
+`caddy:2-alpine`, `postgres:17-alpine`, `redis:7-alpine`, `alpine:3.21`.
+Nothing is compiled from source at build time, so the same Dockerfile
+builds on a laptop and on a t4g.
+
+## Migrations at startup
+
+The web image has an entrypoint that runs `flask db upgrade` and then
+hands over to gunicorn. Deploying is `git pull` and `up -d --build`, with
+no second step to forget. Compose waits for the database to be healthy
+first, so the upgrade has something to talk to.
+
+The risk this accepts is a bad migration taking the site down instead of
+only the deploy. That trade is right for one server and one writer: a
+schema that is half applied because somebody skipped a step is worse
+than a failed container that refuses to serve.
+
+The entrypoint is invoked as `sh /app/docker/entrypoint.sh` rather than
+relying on the file's execute bit, which does not survive a checkout on
+Windows.
+
+## Versioned static addresses
+
+Caddy serves `/static/*` with `Cache-Control: max-age=31536000,
+immutable`. That is only safe if a changed file has a changed address, so
+`url_defaults` appends `?v=<hash>` — the first eight hex digits of the
+file's SHA-256 — to every `url_for('static', …)`. Templates did not
+change; the hook sits in `create_app` and applies to all thirteen call
+sites at once.
+
+The hash is computed once per file and cached, except in debug where the
+file can change under the running process. A file that cannot be read
+gets a plain address rather than an error: a missing stylesheet should
+show up as a missing stylesheet, not as a 500 on every page.
+
+This also means a deploy needs no cache purge, at Cloudflare or anywhere
+else. Nothing has to be told that the CSS changed.
+
+## Where the client address comes from
+
+Rate limits are per client address, so the address has to be the real one
+and must not be something the client can type. The chain is player →
+Cloudflare → Caddy → gunicorn, which is two proxy hops, so
+`TRUSTED_PROXY_HOPS=2`.
+
+`ProxyFix` counts from the right end of `X-Forwarded-For`, and that is
+what makes it trustworthy. Cloudflare appends the address it sees to
+whatever the client sent, and Caddy appends Cloudflare's; two from the
+end is therefore always the address Cloudflare saw. A client that sends
+`X-Forwarded-For: 9.9.9.9` only makes the list longer on the left, where
+nobody is looking.
+
+Two more things have to hold for that to be true, and both are outside
+the application:
+
+- Caddy's `trusted_proxies` lists the Cloudflare ranges, so it only
+  believes forwarded headers from them.
+- The security group allows 80 and 443 only from those same ranges, so
+  the origin cannot be reached directly. Without this the whole chain is
+  advisory: anyone who finds the IP could present any header they like.
+
+The alternative was `CF-Connecting-IP`, which is simpler to read and
+exactly as forgeable if the origin is reachable. Counting hops keeps the
+application ignorant of which CDN is in front.
+
+## Backups
+
+A small container with `pg_dump`, `gzip` and `aws-cli` sleeps until
+03:15, dumps, uploads to `s3://<bucket>/muamma/muamma-<timestamp>.sql.gz`
+and deletes anything older than thirty days.
+
+It waits with arithmetic on the clock rather than running `crond`. cron
+in a container means copying the environment into a file for the job to
+source, and that file would hold the database password; a `sleep` loop
+needs none of it and its output goes straight to the Docker log. A failed
+backup logs and the loop continues, so one bad night does not stop the
+next one.
+
+AWS access comes from the instance's IAM role. There are no AWS keys in
+the environment, in the compose file or in the image, which means there
+is nothing to rotate and nothing to leak into a log. For that to work
+inside a container, IMDSv2's hop limit has to be 2 — the first hop is
+the container's gateway. The role's policy is scoped to the one bucket
+and the one prefix.
+
+The dump is taken with `--clean --if-exists --no-owner --no-privileges`
+so it restores over a non-empty database and does not carry role names
+between machines. The script refuses to upload a dump under a kilobyte:
+a successful `pg_dump` of this schema is never that small, so that size
+means something went wrong and the thirty day window should not spend
+one of its slots on it.
+
+Restoring streams from S3 through `gunzip` into `psql` with
+`ON_ERROR_STOP=1`, with `web` stopped for the duration and started again
+afterwards even if the restore fails. `scripts/restore.sh` is the
+wrapper; the work happens in the backup image, which is the only place
+that already has both tools.
+
+## Moving puzzles between databases
+
+`flask export-puzzles` writes every puzzle as JSON; `flask
+import-puzzles --start` reads it back. Plays, events and players stay
+where they are — a puzzle is content, a play is somebody's history, and
+the two should not travel together.
+
+The export includes `publish_date` for the reader's benefit and the
+import ignores it. Dates mean different things in two databases: the
+import walks forward from `--start` and fills days that have no puzzle,
+skipping the ones that do, because `publish_date` is unique and a
+collision would be a crash rather than a decision. Practice puzzles
+arrive without a date, as they live.
+
+Two puzzles are the same puzzle if their kind, clue and answer match,
+after collapsing whitespace and normalising the answer. Ids are no use
+across databases and dates are reassigned, so the text is what is left.
+Re-running an import is therefore safe, and a file that repeats itself
+adds one puzzle.
+
+`--dry-run` prints the same lines and rolls back. The output names the
+day each puzzle would land on, which is the part worth checking before
+committing to it.
+
+## When the guide gives the answer away
+
+The guide page solves twelve clues line by line. Publishing one of those
+answers as the day's puzzle would hand it to anyone who read the guide,
+so both ways in warn about it: the admin form flashes after saving, and
+the importer prints a warning under the puzzle.
+
+Neither blocks. The same word can be the answer to a different clue, and
+the editor is the one who knows whether this is that case. The check
+lives in `muamma/puzzles.py` next to the other things that are true about
+a puzzle, with a thin wrapper in `admin/services.py` beside the Sunday
+and long word warnings, so the rule has one definition and two callers.
