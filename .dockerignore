@@ -1,6 +1,8 @@
 .venv/
 .git/
 .env
+.env.production
+tests/
 __pycache__/
 *.py[cod]
 .pytest_cache/

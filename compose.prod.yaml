@@ -1,0 +1,122 @@
+# Canlı yığın. Dışarıya sadece Caddy'nin 80 ve 443 portları açık;
+# uygulama, veritabanı ve Redis yalnızca bu ağın içinden görünür.
+#
+#   docker compose -f compose.prod.yaml --env-file .env.production up -d --build
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Caddy statikleri doğrudan servis eder; uygulamaya hiç uğramazlar.
+      - ./muamma/static:/srv/static:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+
+  web:
+    build: .
+    restart: unless-stopped
+    logging: *logging
+    env_file: .env.production
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?connect_timeout=5
+      RATELIMIT_STORAGE_URI: redis://redis:6379/0
+    # Açılışta migrationlar çalışır (entrypoint), sonra bu komut.
+    command:
+      - gunicorn
+      - --bind=0.0.0.0:8000
+      - --workers=3
+      - --timeout=30
+      - --access-logfile=-
+      - --error-logfile=-
+      - muamma:create_app()
+    expose:
+      - "8000"
+    healthcheck:
+      # Veritabanına dokunmayan en küçük sayfa.
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/robots.txt", timeout=4)
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging: *logging
+    # Hız sınırı sayaçları; kaybolurlarsa sayaç sıfırlanır, veri gitmez.
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backup:
+    build: ./docker/backup
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      TZ: ${APP_TIMEZONE:-Europe/Istanbul}
+      PGHOST: db
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      # S3 erişimi sunucunun IAM rolünden gelir; burada anahtar yok.
+      AWS_REGION: ${AWS_REGION}
+      AWS_DEFAULT_REGION: ${AWS_REGION}
+      BACKUP_BUCKET: ${BACKUP_BUCKET}
+      BACKUP_PREFIX: ${BACKUP_PREFIX:-muamma}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+      BACKUP_AT: ${BACKUP_AT:-03:15}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
