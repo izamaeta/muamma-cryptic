@@ -149,7 +149,11 @@ def puzzle_fingerprint(kind: str, clue: str, answer: str) -> tuple[str, str, str
 @click.argument("path", type=click.Path(dir_okay=False, writable=True))
 @with_appcontext
 def export_puzzles(path):
-    """Write every puzzle to a JSON file."""
+    """Write every puzzle to a JSON file.
+
+    The file holds every answer and explanation, so it must never be
+    committed. *.puzzles.json and exports/ are already ignored.
+    """
     puzzles = db.session.scalars(
         select(Puzzle).order_by(Puzzle.kind, Puzzle.publish_date, Puzzle.id)
     )
@@ -209,9 +213,9 @@ def free_days_from(first_day: date):
     "--start",
     required=True,
     metavar="YYYY-MM-DD",
-    help="Günlükler bu tarihten itibaren boş günlere yerleşir.",
+    help="Dailies fill the free days from this date on.",
 )
-@click.option("--dry-run", is_flag=True, help="Ne olacağını yaz, hiçbir şey kaydetme.")
+@click.option("--dry-run", is_flag=True, help="Print what would happen, save nothing.")
 @with_appcontext
 def import_puzzles(path, start, dry_run):
     """Add puzzles from a JSON file written by export-puzzles."""

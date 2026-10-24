@@ -11,5 +11,8 @@ htmlcov/
 dist/
 build/
 *.log
-data/private/
 certs/
+
+# Puzzle exports: they carry every answer.
+*.puzzles.json
+exports/
