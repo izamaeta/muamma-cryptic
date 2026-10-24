@@ -20,9 +20,11 @@ services:
       - "443:443/udp"
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN}
-      ACME_EMAIL: ${ACME_EMAIL}
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Cloudflare Origin CA sertifikası ve anahtarı; sunucuda elle
+      # oluşturulur, depoya girmez.
+      - ./certs:/certs:ro
       # Caddy statikleri doğrudan servis eder; uygulamaya hiç uğramazlar.
       - ./muamma/static:/srv/static:ro
       - caddy_data:/data
