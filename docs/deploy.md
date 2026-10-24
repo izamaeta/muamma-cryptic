@@ -1,50 +1,54 @@
-# Canlıya çıkış
+# Going live
 
-Bu belge sıfırdan bir sunucu kurar, siteyi açar, günceller ve gerekirse
-yedekten geri döner. Adımlar sırayla okunacak şekilde yazıldı.
+This document builds a server from nothing, opens the site, updates it and
+restores from a backup when that is needed. The steps are meant to be read
+in order.
 
-Hiçbir yerde gerçek şifre, anahtar ya da token yazmıyoruz: üretilen her sır
-doğrudan sunucudaki `.env.production` dosyasına girilir, o dosya da git'e
-girmez (`.gitignore`). Aynısı sertifika için de geçerli: origin sertifikası
-ve özel anahtarı sunucudaki `certs/` klasöründe durur, o da git'e girmez.
+No real password, key or token is written down anywhere: every secret that
+gets generated goes straight into `.env.production` on the server, and that
+file is not in git (`.gitignore`). The same holds for the certificate: the
+origin certificate and its private key live in `certs/` on the server,
+which is not in git either.
 
-## İstek nereden geçiyor
+## Where a request goes
 
 ```
-Oyuncu  →  Cloudflare  →  Caddy  →  gunicorn (muamma)
-                             │          │
-                             │          ├── PostgreSQL
-                             │          └── Redis (hız sınırı)
-                             └── /static/* (doğrudan, bir yıl önbellek)
+Player  →  Cloudflare  →  Caddy  →  gunicorn (muamma)
+                            │          │
+                            │          ├── PostgreSQL
+                            │          └── Redis (rate limits)
+                            └── /static/* (direct, cached a year)
 ```
 
-Dışarıya açık olan tek şey Caddy'nin 443 portu, o da yalnızca Cloudflare
-aralıklarına. Veritabanı ve Redis compose ağının içinde kalır, hiçbir portu
-yayınlamazlar.
+The only thing open to the outside is Caddy's port 443, and only to the
+Cloudflare ranges. PostgreSQL and Redis stay inside the compose network and
+publish no ports at all.
 
-Caddy sertifikayı kendi almaz: Cloudflare'in verdiği Origin CA sertifikasını
-dosyadan okur. Yani origin'e giden bağlantı da şifreli, ama o sertifikayı
-tarayıcılar değil yalnızca Cloudflare doğrular.
+Caddy does not obtain a certificate of its own: it reads the Cloudflare
+Origin CA certificate from disk. The hop to the origin is encrypted too,
+but that certificate is validated by Cloudflare, never by a browser.
 
-## 1. S3 kovası
+## 1. S3 bucket
 
-Yedekler için tek bir kova yeterli:
+One bucket is enough for the backups:
 
-1. S3'te yeni kova aç (sunucuyla aynı bölge, örneğin `eu-central-1`).
-2. **Block all public access** açık kalsın.
-3. **Default encryption**: SSE-S3 (ya da istersen KMS).
-4. **Versioning** açmak iyi fikir: yanlışlıkla silinen yedek geri gelir.
-5. Kovanın adını not et, `.env.production` içinde `BACKUP_BUCKET` olacak.
+1. Create a new bucket (same region as the server, for example
+   `eu-north-1`).
+2. Leave **Block all public access** on.
+3. **Default encryption**: SSE-S3 (or KMS if you prefer).
+4. **Versioning** is worth turning on: a backup deleted by accident comes
+   back.
+5. Note the bucket name; it becomes `BACKUP_BUCKET` in `.env.production`.
 
-Yedekler `s3://<kova>/muamma/muamma-<zaman>.sql.gz` biçiminde durur.
+Backups are stored as `s3://<bucket>/muamma/muamma-<timestamp>.sql.gz`.
 
-## 2. IAM rolü
+## 2. IAM role
 
-Sunucu S3'e kendi kimliğiyle yazar. Ortam değişkenine anahtar koymuyoruz:
-anahtar olmayınca sızacak bir şey de olmaz.
+The server writes to S3 as itself. No key goes into the environment: a key
+that does not exist cannot leak.
 
-1. IAM'de yeni bir **rol** oluştur, güvenilen servis: EC2.
-2. Şu satır içi politikayı ekle (`KOVA` yerine kendi kovanı yaz):
+1. Create a new IAM **role**, trusted service: EC2.
+2. Attach this inline policy (replace `BUCKET` with your own):
 
 ```json
 {
@@ -53,31 +57,33 @@ anahtar olmayınca sızacak bir şey de olmaz.
     {
       "Effect": "Allow",
       "Action": ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
-      "Resource": "arn:aws:s3:::KOVA/muamma/*"
+      "Resource": "arn:aws:s3:::BUCKET/muamma/*"
     },
     {
       "Effect": "Allow",
       "Action": "s3:ListBucket",
-      "Resource": "arn:aws:s3:::KOVA",
+      "Resource": "arn:aws:s3:::BUCKET",
       "Condition": { "StringLike": { "s3:prefix": "muamma/*" } }
     }
   ]
 }
 ```
 
-3. Rolü sunucuya bağla (EC2 → Actions → Security → Modify IAM role).
+3. Attach the role to the server (EC2 → Actions → Security → Modify IAM
+   role).
 
-## 3. Sunucu
+## 3. Server
 
-- Tür: **t4g.small** (ARM, Graviton). Bütün imajlar arm64'te çalışır.
-- İşletim sistemi: Ubuntu 24.04 LTS **arm64**.
-- Disk: 20 GB gp3 yeter; veritabanı küçük, yedekler S3'te.
+- Type: **t4g.small** (ARM, Graviton). Every image runs on arm64.
+- Operating system: Ubuntu 24.04 LTS **arm64**.
+- Disk: 20 GB gp3 is enough; the database is small and the backups are in
+  S3.
 
-Örnek oluşturulurken iki ayar önemli:
+Two settings matter while the instance is being created:
 
-- **IMDSv2: required**, **hop limit: 2**. Yedek alıcı bir konteynerin içinde
-  çalışıyor; kimlik bilgisini örnek meta verisinden alabilmesi için ikinci
-  atlamaya izin vermek gerekiyor. Sonradan değiştirmek için:
+- **IMDSv2: required**, **hop limit: 2**. The backup runner works inside a
+  container, so it needs the second hop to read credentials from the
+  instance metadata. To change it afterwards:
 
   ```bash
   aws ec2 modify-instance-metadata-options \
@@ -86,12 +92,12 @@ anahtar olmayınca sızacak bir şey de olmaz.
       --http-put-response-hop-limit 2
   ```
 
-- **Güvenlik grubu**: sadece **443**, o da **yalnızca** Cloudflare
-  aralıklarına açık olsun (https://www.cloudflare.com/ips/). 80'e hiç gerek
-  yok: ACME doğrulaması yapılmıyor ve Cloudflare origin'e her zaman HTTPS
-  ile bağlanıyor. Böylece origin'e doğrudan ulaşılamaz, herkes
-  Cloudflare'den geçmek zorunda kalır. 22 yalnızca kendi adresine açık
-  olsun; mümkünse SSM Session Manager kullan ve 22'yi hiç açma.
+- **Security group**: only **443**, and only to the Cloudflare ranges
+  (https://www.cloudflare.com/ips/). Port 80 is not needed at all: there is
+  no ACME validation and Cloudflare always connects to the origin over
+  HTTPS. The origin is therefore unreachable directly and everyone has to
+  come through Cloudflare. Open 22 to your own address only; use SSM
+  Session Manager if you can and leave 22 closed.
 
 ## 4. Docker
 
@@ -111,9 +117,10 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
 sudo usermod -aG docker "$USER"
 ```
 
-Son komuttan sonra bir kez çıkıp gir, grup üyeliği öyle geçerli oluyor.
+Log out and back in once after the last command; that is when the group
+membership takes effect.
 
-## 5. Depo ve ayarlar
+## 5. Repository and settings
 
 ```bash
 git clone https://github.com/izamaeta/muamma-cryptic.git
@@ -122,109 +129,112 @@ cp .env.production.example .env.production
 chmod 600 .env.production
 ```
 
-`.env.production` içinde doldurulacaklar:
+What to fill in inside `.env.production`:
 
-| Ayar | Ne yazılacak |
+| Setting | What to write |
 | --- | --- |
-| `SECRET_KEY` | `openssl rand -hex 32` çıktısı. Değiştirirsen bütün oyuncuların ilerlemesi sıfırlanır. |
-| `SITE_URL` | `https://muamma.com.tr` gibi, sonunda eğik çizgi olmadan |
-| `SITE_DOMAIN` | Aynı alan adı, şemasız (`muamma.com.tr`) |
-| `CONTACT_EMAIL` | Sitede görünen iletişim adresi |
-| `POSTGRES_PASSWORD` | `openssl rand -base64 24` çıktısı |
-| `AWS_REGION` | Sunucunun bölgesi |
-| `BACKUP_BUCKET` | 1. adımdaki kova |
+| `SECRET_KEY` | Output of `openssl rand -hex 32`. Changing it resets every player's progress. |
+| `SITE_URL` | Like `https://muamma.app`, without a trailing slash |
+| `SITE_DOMAIN` | The same domain, without the scheme (`muamma.app`) |
+| `CONTACT_EMAIL` | The contact address shown on the site |
+| `POSTGRES_PASSWORD` | Output of `openssl rand -base64 24` |
+| `AWS_REGION` | The server's region |
+| `BACKUP_BUCKET` | The bucket from step 1 |
 
-`SESSION_COOKIE_SECURE=1`, `HSTS_ENABLED=1` ve `TRUSTED_PROXY_HOPS=2`
-örnekte doğru geliyor; dokunma.
+`SESSION_COOKIE_SECURE=1`, `HSTS_ENABLED=1` and `TRUSTED_PROXY_HOPS=2` are
+already right in the example; leave them alone.
 
 ## 6. Cloudflare
 
-Sertifika Cloudflare'den geliyor, bu yüzden bu adım ilk açılıştan önce
-yapılır: dosyalar yerinde olmadan Caddy başlamaz.
+The certificate comes from Cloudflare, so this step happens before the
+first start: Caddy will not come up without the files in place.
 
-**Önce origin sertifikası.** SSL/TLS → Origin Server → **Create
+**The origin certificate first.** SSL/TLS → Origin Server → **Create
 Certificate**:
 
-- Özel anahtarı Cloudflare üretsin (varsayılan), tür **RSA (2048)**.
-- Alan adları: `muamma.com.tr` ve `*.muamma.com.tr`.
-- Geçerlilik: 15 yıl. Bitiş tarihini bir yere not et; bu sertifika
-  kendiliğinden yenilenmiyor.
+- Let Cloudflare generate the private key (the default), type **RSA
+  (2048)**.
+- Hostnames: `muamma.app` and `*.muamma.app`.
+- Validity: 15 years. Note the expiry date somewhere; this certificate does
+  not renew itself.
 
-Açılan sayfada iki metin var ve **özel anahtar bir daha gösterilmiyor**.
-İkisini de sunucuda şu dosyalara yaz:
+The page that opens has two blocks of text, and **the private key is never
+shown again**. Write both into these files on the server:
 
 ```bash
 mkdir -p certs && chmod 700 certs
-nano certs/origin.pem          # Origin Certificate bloğu
-nano certs/origin.key          # Private Key bloğu
+nano certs/origin.pem          # the Origin Certificate block
+nano certs/origin.key          # the Private Key block
 chmod 600 certs/origin.key
 ```
 
-`certs/` hem `.gitignore` hem `.dockerignore` içinde: anahtar ne git'e ne
-de imaja girer. Caddy bu klasörü salt okunur görür.
+`certs/` is in both `.gitignore` and `.dockerignore`: the private key goes
+neither into git nor into an image. Caddy sees the directory read-only.
 
-Sertifikayı sonradan değiştirmek gerekirse — süresi dolduğunda ya da anahtar
-sızdıysa — yeni dosyaları aynı yere yaz, sonra Caddy'yi yeniden başlat.
-Dosyalar yalnızca açılışta okunuyor, `git pull` ile gelen bir güncelleme
-Caddy'ye dokunmuyor:
+To replace the certificate later — when it expires or if the key leaks —
+write the new files in the same place, then restart Caddy. The files are
+read at startup only, and an update pulled with `git pull` does not touch
+Caddy:
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production restart caddy
 ```
 
-**Sonra DNS ve SSL ayarları:**
+**Then DNS and the SSL settings:**
 
-1. DNS'te alan adı için bir **A kaydı** aç, sunucunun genel IP'si, kayıt
-   **Proxied** (turuncu bulut). Gri buluta hiç gerek yok: ACME doğrulaması
-   yapılmıyor, ayrıca güvenlik grubu origin'e yalnızca Cloudflare'den gelen
-   isteği alıyor.
-2. SSL/TLS → Overview → **Full (strict)**. Origin sertifikasını doğrulayan
-   mod bu; "Flexible" ya da "Full" seçilirse origin'e giden bağlantının
-   doğrulanmadığı bir boşluk kalır.
-3. SSL/TLS → Edge Certificates → **Always Use HTTPS** açık.
-4. Caching → HTML'i önbelleğe alan bir kural **kurma**: günün bulmacası ve
-   oyuncunun durumu her istekte sunucudan gelmeli. `/static/*` zaten bir
-   yıl önbellekli geliyor, Cloudflare onu kendiliğinden tutar.
+1. Add an **A record** for the domain pointing at the server's public IP,
+   **Proxied** (orange cloud). There is no need for the grey cloud: there
+   is no ACME validation, and the security group only admits requests that
+   come from Cloudflare anyway.
+2. SSL/TLS → Overview → **Full (strict)**. This is the mode that validates
+   the origin certificate; "Flexible" or "Full" would leave the hop to the
+   origin unverified.
+3. SSL/TLS → Edge Certificates → **Always Use HTTPS** on.
+4. Caching → do **not** add a rule that caches HTML: the day's puzzle and
+   the player's state have to come from the server on every request.
+   `/static/*` already arrives with a one year cache and Cloudflare keeps
+   it by itself.
 
-Statik adreslerin sonunda `?v=<özet>` var: dosya değişince adres de
-değişiyor, bu yüzden uzun önbellek güvenli ve dağıtımdan sonra önbellek
-temizlemek gerekmiyor.
+Static addresses end in `?v=<hash>`: the address changes when the file
+does, which is what makes the long cache safe and why no cache purge is
+needed after a deploy.
 
-## 7. İlk açılış
+## 7. First start
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production up -d --build
 docker compose -f compose.prod.yaml --env-file .env.production ps
 ```
 
-Migrationlar web konteyneri açılırken kendiliğinden çalışır, ayrı bir adım
-yok. Kontrol etmek istersen:
+Migrations run by themselves while the web container starts; there is no
+separate step. To check:
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production logs web | head -30
 ```
 
-Caddy'nin sertifikayı okuduğunu da gör; dosyalar yoksa ya da bozuksa
-konteyner burada durur:
+Check that Caddy read the certificate too; the container stops here if the
+files are missing or broken:
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production logs caddy | tail -20
 ```
 
-Yönetici hesabını aç (şifre sorulur, komut satırında görünmez):
+Create the admin account (it asks for the password, which does not appear
+on the command line):
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production \
-    exec web flask create-admin sen@ornek.com
+    exec web flask create-admin you@example.com
 ```
 
-Son kontrol, artık alan adı üzerinden:
+A last check, now over the domain:
 
 ```bash
-curl -I https://muamma.com.tr
+curl -I https://muamma.app
 ```
 
-## 8. Güncelleme
+## 8. Updating
 
 ```bash
 cd muamma-cryptic
@@ -232,94 +242,98 @@ git pull
 docker compose -f compose.prod.yaml --env-file .env.production up -d --build
 ```
 
-Yeni web konteyneri açılırken migrationları da uygular. Sağlık kontrolü
-geçene kadar Caddy eski konteynere konuşmaya devam eder, kısa bir kesinti
-olur ama istek düşmez.
+The new web container applies the migrations as it starts. Caddy keeps
+talking to the old container until the health check passes, so there is a
+short gap but no dropped request.
 
-Sonrasında bir bakış:
+A look afterwards:
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production ps
 docker compose -f compose.prod.yaml --env-file .env.production logs -n 50 web
-curl -I https://muamma.com.tr
+curl -I https://muamma.app
 ```
 
-Eski imajlar diski doldurursa:
+If old images fill the disk:
 
 ```bash
 docker image prune -f
 ```
 
-## 9. Yedekler
+## 9. Backups
 
-`backup` servisi her gün `BACKUP_AT` saatinde (varsayılan 03:15, sunucu saat
-diliminde) şunu yapar:
+Every day at `BACKUP_AT` (03:15 by default, in the server's timezone) the
+`backup` service:
 
-1. `pg_dump` ile tam bir döküm alır, `gzip` ile sıkıştırır.
-2. `s3://<kova>/muamma/muamma-<zaman>.sql.gz` adresine yükler.
-3. 30 günden eski yedekleri siler (`BACKUP_KEEP_DAYS`).
+1. takes a full dump with `pg_dump` and compresses it with `gzip`,
+2. uploads it to `s3://<bucket>/muamma/muamma-<timestamp>.sql.gz`,
+3. deletes backups older than 30 days (`BACKUP_KEEP_DAYS`).
 
-Kurulumdan sonra bir yedeği elle alıp çalıştığını gör:
+After setup, take one backup by hand to see that it works:
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production \
     run --rm --entrypoint sh backup /usr/local/bin/backup.sh
 ```
 
-Listeyi görmek için:
+To see the list:
 
 ```bash
 ./scripts/restore.sh --list
 ```
 
-Günlük çalıştığını doğrulamak için `docker compose ... logs backup`.
+To confirm it runs daily, `docker compose ... logs backup`.
 
-## 10. Yedekten geri dönme
+## 10. Restoring from a backup
 
 ```bash
-./scripts/restore.sh --list                 # hangi yedekler var
-./scripts/restore.sh                        # en yenisini geri yükle
+./scripts/restore.sh --list                 # which backups exist
+./scripts/restore.sh                        # restore the newest
 ./scripts/restore.sh muamma/muamma-20261001T001500Z.sql.gz
 ```
 
-Script sırayla: onay ister, `web`'i durdurur, dökümü S3'ten doğrudan
-`psql`'e akıtır, `web`'i geri açar. Döküm `--clean --if-exists` ile
-alındığından mevcut tabloların üstüne yazar; yarım kalmış bir geri yükleme
-olmasın diye `psql` ilk hatada durur.
+The script, in order: asks for confirmation, stops `web`, streams the dump
+from S3 straight into `psql`, starts `web` again. The dump was taken with
+`--clean --if-exists`, so it writes over the existing tables; `psql` stops
+at the first error so you are not left with a half-finished restore.
 
-Geri yükleme bittikten sonra bir günlük bulmacayı açıp oynanabildiğini
-kontrol et.
+When the restore is done, open a daily puzzle and check that it plays.
 
-## 11. Bulmaca aktarımı
+## 11. Moving puzzles
 
-Bulmacalar yerel makinede hazırlanıp sunucuya taşınabilir.
+Puzzles can be prepared on a local machine and carried to the server.
 
-Yerelde:
+Locally:
 
 ```bash
-flask export-puzzles bulmacalar.json
+flask export-puzzles muamma.puzzles.json
 ```
 
-Sunucuda (dosyayı önce `scp` ile at):
+**The export holds every answer and explanation, so it must never be
+committed.** `*.puzzles.json` and `exports/` are in `.gitignore` for that
+reason; keep exports under one of those names and delete them when you are
+done.
+
+On the server (copy the file over with `scp` first):
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production \
-    cp bulmacalar.json web:/tmp/bulmacalar.json
+    cp muamma.puzzles.json web:/tmp/muamma.puzzles.json
 docker compose -f compose.prod.yaml --env-file .env.production \
-    exec web flask import-puzzles /tmp/bulmacalar.json \
+    exec web flask import-puzzles /tmp/muamma.puzzles.json \
     --start 2026-11-01 --dry-run
 ```
 
-`--dry-run` ne olacağını yazar, hiçbir şey kaydetmez. Çıktı iyi görünüyorsa
-aynı komutu `--dry-run` olmadan çalıştır.
+`--dry-run` prints what would happen and saves nothing. If the output looks
+right, run the same command without `--dry-run`.
 
-Günlükler verilen tarihten itibaren **boş** günlere sırayla yerleşir; dolu
-bir gün atlanır. Tadımlıklar tarihsiz eklenir. Aynı ipucu ve cevap daha önce
-eklenmişse tekrar eklenmez, "atlandı" diye yazar. Cevap rehber sayfasındaki
-çözümlü örneklerden biriyse uyarı çıkar — kayıt engellenmez, kararı sen
-verirsin.
+Dailies land on the **free** days from the given date on, in order; a day
+that is taken is skipped. Practice puzzles are added without a date. A clue
+and answer that were imported before are not added again — the output says
+"skipped". If the answer is one of the worked examples on the guide page, a
+warning appears; it does not block the import, the decision is yours.
 
-## 12. Ara sıra bakılacaklar
+## 12. Things to check now and then
 
 ```bash
 df -h                     # disk
@@ -327,9 +341,9 @@ docker compose -f compose.prod.yaml --env-file .env.production ps
 docker compose -f compose.prod.yaml --env-file .env.production logs -n 100 web
 ```
 
-Log'lar Docker tarafında döndürülüyor (dosya başına 10 MB, üç dosya), yani
-disk log yüzünden dolmaz.
+Logs are rotated by Docker (10 MB per file, three files), so they cannot
+fill the disk.
 
-Sunucu paketlerini güncellemek için `sudo apt-get update && sudo apt-get
-upgrade`; çekirdek güncellemesinden sonra yeniden başlatmak gerekirse
-konteynerler `restart: unless-stopped` sayesinde kendiliğinden geri gelir.
+To update the server's packages, `sudo apt-get update && sudo apt-get
+upgrade`; if a kernel update needs a reboot, the containers come back by
+themselves thanks to `restart: unless-stopped`.

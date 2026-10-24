@@ -935,8 +935,8 @@ the application:
 
 - Caddy's `trusted_proxies` lists the Cloudflare ranges, so it only
   believes forwarded headers from them.
-- The security group allows 80 and 443 only from those same ranges, so
-  the origin cannot be reached directly. Without this the whole chain is
+- The security group allows 443 only from those same ranges, so the
+  origin cannot be reached directly. Without this the whole chain is
   advisory: anyone who finds the IP could present any header they like.
 
 The alternative was `CF-Connecting-IP`, which is simpler to read and
