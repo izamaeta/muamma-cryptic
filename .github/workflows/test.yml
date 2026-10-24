@@ -1,4 +1,4 @@
-name: Testler
+name: Tests
 
 on:
   push:
@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   test:
-    name: Testler ve migrationlar
+    name: Tests and migrations
     runs-on: ubuntu-latest
 
     # Throwaway database for this run only. These values are test fixtures,
@@ -50,7 +50,7 @@ jobs:
           cache: pip
           cache-dependency-path: requirements*.txt
 
-      - name: Bağımlılıkları kur
+      - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
       - name: pytest
@@ -58,14 +58,14 @@ jobs:
 
       # The suite runs on SQLite; this is where the migrations meet the real
       # database they will run against.
-      - name: Migrationları PostgreSQL üzerinde çalıştır
+      - name: Run migrations on PostgreSQL
         run: flask db upgrade
 
-      - name: Modellerle migrationları karşılaştır
+      - name: Compare models against migrations
         run: flask db check
 
   docker:
-    name: Docker imajı
+    name: Docker image
     runs-on: ubuntu-latest
 
     steps:

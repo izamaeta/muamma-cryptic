@@ -1,12 +1,9 @@
 #!/bin/sh
-# Bir yedek al, S3'e koy, eskileri sil.
-#
-# S3 erişimi sunucunun IAM rolünden gelir: aws-cli kimlik bilgisini örnek
-# meta verisinden (169.254.169.254) alır. Ortam değişkeninde anahtar yok,
-# dolayısıyla diske de log'a da anahtar düşmez.
+# Dump, upload to S3, delete the old ones. AWS credentials come from the
+# instance IAM role, not from the environment.
 set -eu
 
-: "${BACKUP_BUCKET:?BACKUP_BUCKET gerekli}"
+: "${BACKUP_BUCKET:?BACKUP_BUCKET is required}"
 PREFIX="${BACKUP_PREFIX:-muamma}"
 KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
 
@@ -24,23 +21,22 @@ cleanup() {
 }
 trap cleanup EXIT
 
-log "yedek alınıyor: ${PGDATABASE:-?}"
-# --clean --if-exists: geri yükleme boş olmayan bir veritabanının üstüne de
-# çalışsın. Sahiplik ve yetkiler taşınmaz; hedefteki rol ne ise o kalır.
+log "dumping: ${PGDATABASE:-?}"
+# --clean --if-exists so a restore works over a non-empty database.
 pg_dump --clean --if-exists --no-owner --no-privileges | gzip -9 >"$file"
 
 size=$(wc -c <"$file" | tr -d ' ')
 if [ "$size" -lt 1000 ]; then
-    log "HATA: dökümün boyutu inandırıcı değil (${size} bayt), yükleme yapılmadı"
+    log "ERROR: dump size not plausible (${size} bytes), nothing uploaded"
     exit 1
 fi
 
-log "yükleniyor: ${target} (${size} bayt)"
+log "uploading: ${target} (${size} bytes)"
 aws s3 cp "$file" "$target" --only-show-errors
-log "yüklendi"
+log "uploaded"
 
 cutoff=$(date -u -d "${KEEP_DAYS} days ago" +%s)
-log "${KEEP_DAYS} günden eski yedekler siliniyor"
+log "deleting backups older than ${KEEP_DAYS} days"
 
 aws s3api list-objects-v2 \
     --bucket "$BACKUP_BUCKET" \
@@ -53,8 +49,8 @@ aws s3api list-objects-v2 \
         age=$(date -u -d "$modified" +%s 2>/dev/null) || continue
         if [ "$age" -lt "$cutoff" ]; then
             aws s3api delete-object --bucket "$BACKUP_BUCKET" --key "$key" >/dev/null
-            log "silindi: ${key}"
+            log "deleted: ${key}"
         fi
     done
 
-log "bitti"
+log "done"

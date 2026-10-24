@@ -1,12 +1,12 @@
 #!/bin/sh
-# Bir yedeği S3'ten alıp veritabanına geri yükler. Konteynerin içinde
-# çalışır; dışarıdan scripts/restore.sh çağırır.
+# Restore a backup from S3. Runs inside the container; scripts/restore.sh
+# is the wrapper.
 #
-#   restore.sh                 en yeni yedek
-#   restore.sh <anahtar>       belirli bir yedek (tam S3 anahtarı)
+#   restore.sh                 newest backup
+#   restore.sh <key>           a specific backup (full S3 key)
 set -eu
 
-: "${BACKUP_BUCKET:?BACKUP_BUCKET gerekli}"
+: "${BACKUP_BUCKET:?BACKUP_BUCKET is required}"
 PREFIX="${BACKUP_PREFIX:-muamma}"
 
 key="${1:-}"
@@ -19,18 +19,16 @@ if [ -z "$key" ]; then
 fi
 
 if [ -z "$key" ] || [ "$key" = "None" ]; then
-    echo "Yedek bulunamadı: s3://${BACKUP_BUCKET}/${PREFIX}/" >&2
+    echo "No backup found: s3://${BACKUP_BUCKET}/${PREFIX}/" >&2
     exit 1
 fi
 
-echo "Geri yüklenen yedek: s3://${BACKUP_BUCKET}/${key}"
-echo "Hedef: ${PGUSER}@${PGHOST}/${PGDATABASE}"
+echo "Restoring: s3://${BACKUP_BUCKET}/${key}"
+echo "Target: ${PGUSER}@${PGHOST}/${PGDATABASE}"
 
-# Döküm --clean --if-exists ile alındı: mevcut tabloları kendisi düşürüp
-# yeniden kurar. ON_ERROR_STOP, yarı yüklenmiş bir veritabanıyla
-# kalmamak için.
+# The dump drops and recreates; ON_ERROR_STOP avoids a half-loaded database.
 aws s3 cp "s3://${BACKUP_BUCKET}/${key}" - |
     gunzip |
     psql --quiet --no-psqlrc -v ON_ERROR_STOP=1
 
-echo "Geri yükleme bitti."
+echo "Restore finished."

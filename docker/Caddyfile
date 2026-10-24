@@ -1,13 +1,10 @@
-# Önde Caddy: sıkıştırır, statikleri kendisi verir, geri kalan her şeyi
-# gunicorn'a geçirir. Sertifikayı kendi almıyor; Cloudflare Origin CA
-# sertifikası dosyadan okunur (aşağıdaki tls satırı).
+# Front door: compresses, serves /static/* from disk, proxies the rest to
+# gunicorn. TLS uses a certificate on disk, not ACME.
 {
 	servers {
-		# Yalnızca bu adreslerden gelen X-Forwarded-For'a inanılır. Liste
-		# Cloudflare'in yayınladığı aralıklar (https://www.cloudflare.com/ips/);
-		# değişirse burayı güncelle. Gerçek koruma yine güvenlik grubu:
-		# 443 sadece bu aralıklara açık olmalı ki origin'e doğrudan
-		# ulaşılamasın.
+		# X-Forwarded-For is believed from these addresses only: the
+		# Cloudflare ranges (https://www.cloudflare.com/ips/). Update when
+		# they change.
 		trusted_proxies static \
  173.245.48.0/20 \
  103.21.244.0/22 \
@@ -35,16 +32,13 @@
 }
 
 {$SITE_DOMAIN} {
-	# Cloudflare Origin CA sertifikası: yalnızca Cloudflare'in güvendiği bir
-	# kök imzalar, tarayıcılar bu sertifikayı hiç görmez. Dosyalar caddy
-	# servisine salt okunur bağlanır, depoya girmez (certs/ ignore'da).
-	# ACME yok: Caddy bu alan adı için sertifika almaya çalışmaz.
+	# Cloudflare Origin CA certificate, mounted read-only and never
+	# committed. Naming it here also keeps Caddy from asking ACME for one.
 	tls /certs/origin.pem /certs/origin.key
 
 	encode zstd gzip
 
-	# Statik adresler içerik özetini (?v=...) taşır, bu yüzden bir yıl
-	# önbelleklemek güvenli: içerik değişince adres de değişir.
+	# Static addresses carry a content hash (?v=...), so a year is safe.
 	handle_path /static/* {
 		root * /srv/static
 		header Cache-Control "public, max-age=31536000, immutable"

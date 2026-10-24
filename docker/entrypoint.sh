@@ -1,9 +1,8 @@
 #!/bin/sh
-# Migrationlar uygulamadan önce çalışır: yeni sürüm açılırken şema da
-# güncellenmiş olur, elle bir adım kalmaz.
+# Apply migrations, then hand over to the command.
 set -e
 
-echo "Migrationlar uygulanıyor..."
+echo "Applying migrations..."
 flask db upgrade
 
 exec "$@"

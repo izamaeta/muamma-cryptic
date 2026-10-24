@@ -1,5 +1,4 @@
-# Yedek alıcı: pg_dump, gzip ve aws-cli. Başka bir şey yok.
-# alpine, postgresql17-client ve aws-cli'nin hepsi arm64'te mevcut.
+# Backup runner: pg_dump, gzip and aws-cli, all available on arm64.
 FROM alpine:3.21
 
 RUN apk add --no-cache \

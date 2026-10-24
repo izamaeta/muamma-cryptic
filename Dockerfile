@@ -17,9 +17,8 @@ USER appuser
 
 EXPOSE 8000
 
-# Migrationlar açılışta çalışır; sonra buradaki komut (ya da compose'daki)
-# devralır. sh ile çağrılıyor, dosyanın çalıştırma biti Windows'ta kaybolsa
-# bile sorun olmasın diye.
+# Migrations run before CMD. Invoked through sh: the execute bit does not
+# survive a Windows checkout.
 ENTRYPOINT ["sh", "/app/docker/entrypoint.sh"]
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "muamma:create_app()"]
