@@ -834,9 +834,9 @@ what is published, what restarts, what logs, what else runs — and an
 override that quietly inherits a published database port is exactly the
 mistake worth making impossible.
 
-Caddy stands in front. It gets and renews the certificate, compresses,
-and serves `/static/*` from the files on disk without waking Python;
-everything else goes to gunicorn. Only Caddy publishes ports, 80 and 443.
+Caddy stands in front. It terminates TLS, compresses, and serves
+`/static/*` from the files on disk without waking Python; everything else
+goes to gunicorn. Only Caddy publishes ports, 80 and 443.
 PostgreSQL and Redis publish nothing at all: they are reachable over the
 compose network by name and have no door to the outside. The dev stack
 still binds them to `127.0.0.1` for a `psql` session, which is the one
@@ -851,6 +851,37 @@ Images are the ones that already publish arm64: `python:3.14-slim`,
 `caddy:2-alpine`, `postgres:17-alpine`, `redis:7-alpine`, `alpine:3.21`.
 Nothing is compiled from source at build time, so the same Dockerfile
 builds on a laptop and on a t4g.
+
+## The origin certificate
+
+Caddy does not get its own certificate. The site block names a Cloudflare
+Origin CA certificate on disk — `tls /certs/origin.pem /certs/origin.key`
+— and the ACME settings, `ACME_EMAIL` included, are gone.
+
+The certificate browsers see is Cloudflare's, and it was always going to
+be: the DNS record is proxied, so no client ever speaks to the origin.
+What the origin certificate secures is the second hop, Cloudflare →
+Caddy, and that hop only has to satisfy Cloudflare. An Origin CA
+certificate is signed by a root only Cloudflare trusts, which is exactly
+the right scope: it is useless to anyone else, and it is what Full
+(strict) validates.
+
+Letting Caddy use ACME instead costs an inbound port and a standing
+exception. Validation needs 80 reachable from the whole internet, which
+contradicts a security group that only admits Cloudflare, and renewal
+every sixty days is one more thing that can fail quietly at three in the
+morning. The origin certificate is valid for fifteen years and needs no
+inbound anything.
+
+The trade is a renewal that nobody will remember. Fifteen years out, the
+expiry is past the horizon of this deployment; the deploy runbook records
+the date rather than pretending a reminder will survive that long.
+
+The files are mounted read-only from `./certs`, which is in both
+`.gitignore` and `.dockerignore`: the private key is neither committed
+nor baked into an image. Caddy still listens on 80 and redirects to
+HTTPS, which the security group makes unreachable — harmless, and one
+less thing to undo if the front ever changes.
 
 ## Migrations at startup
 

@@ -5,7 +5,8 @@ yedekten geri döner. Adımlar sırayla okunacak şekilde yazıldı.
 
 Hiçbir yerde gerçek şifre, anahtar ya da token yazmıyoruz: üretilen her sır
 doğrudan sunucudaki `.env.production` dosyasına girilir, o dosya da git'e
-girmez (`.gitignore`).
+girmez (`.gitignore`). Aynısı sertifika için de geçerli: origin sertifikası
+ve özel anahtarı sunucudaki `certs/` klasöründe durur, o da git'e girmez.
 
 ## İstek nereden geçiyor
 
@@ -17,8 +18,13 @@ Oyuncu  →  Cloudflare  →  Caddy  →  gunicorn (muamma)
                              └── /static/* (doğrudan, bir yıl önbellek)
 ```
 
-Dışarıya açık olan tek şey Caddy'nin 80 ve 443 portları. Veritabanı ve Redis
-compose ağının içinde kalır, hiçbir portu yayınlamazlar.
+Dışarıya açık olan tek şey Caddy'nin 443 portu, o da yalnızca Cloudflare
+aralıklarına. Veritabanı ve Redis compose ağının içinde kalır, hiçbir portu
+yayınlamazlar.
+
+Caddy sertifikayı kendi almaz: Cloudflare'in verdiği Origin CA sertifikasını
+dosyadan okur. Yani origin'e giden bağlantı da şifreli, ama o sertifikayı
+tarayıcılar değil yalnızca Cloudflare doğrular.
 
 ## 1. S3 kovası
 
@@ -80,10 +86,12 @@ anahtar olmayınca sızacak bir şey de olmaz.
       --http-put-response-hop-limit 2
   ```
 
-- **Güvenlik grubu**: 80 ve 443 **yalnızca** Cloudflare aralıklarına açık
-  olsun (https://www.cloudflare.com/ips/). Böylece origin'e doğrudan
-  ulaşılamaz, herkes Cloudflare'den geçmek zorunda kalır. 22 yalnızca kendi
-  adresine açık olsun; mümkünse SSM Session Manager kullan ve 22'yi hiç açma.
+- **Güvenlik grubu**: sadece **443**, o da **yalnızca** Cloudflare
+  aralıklarına açık olsun (https://www.cloudflare.com/ips/). 80'e hiç gerek
+  yok: ACME doğrulaması yapılmıyor ve Cloudflare origin'e her zaman HTTPS
+  ile bağlanıyor. Böylece origin'e doğrudan ulaşılamaz, herkes
+  Cloudflare'den geçmek zorunda kalır. 22 yalnızca kendi adresine açık
+  olsun; mümkünse SSM Session Manager kullan ve 22'yi hiç açma.
 
 ## 4. Docker
 
@@ -121,7 +129,6 @@ chmod 600 .env.production
 | `SECRET_KEY` | `openssl rand -hex 32` çıktısı. Değiştirirsen bütün oyuncuların ilerlemesi sıfırlanır. |
 | `SITE_URL` | `https://muamma.com.tr` gibi, sonunda eğik çizgi olmadan |
 | `SITE_DOMAIN` | Aynı alan adı, şemasız (`muamma.com.tr`) |
-| `ACME_EMAIL` | Let's Encrypt bildirimleri için bir adres |
 | `CONTACT_EMAIL` | Sitede görünen iletişim adresi |
 | `POSTGRES_PASSWORD` | `openssl rand -base64 24` çıktısı |
 | `AWS_REGION` | Sunucunun bölgesi |
@@ -130,7 +137,60 @@ chmod 600 .env.production
 `SESSION_COOKIE_SECURE=1`, `HSTS_ENABLED=1` ve `TRUSTED_PROXY_HOPS=2`
 örnekte doğru geliyor; dokunma.
 
-## 6. İlk açılış
+## 6. Cloudflare
+
+Sertifika Cloudflare'den geliyor, bu yüzden bu adım ilk açılıştan önce
+yapılır: dosyalar yerinde olmadan Caddy başlamaz.
+
+**Önce origin sertifikası.** SSL/TLS → Origin Server → **Create
+Certificate**:
+
+- Özel anahtarı Cloudflare üretsin (varsayılan), tür **RSA (2048)**.
+- Alan adları: `muamma.com.tr` ve `*.muamma.com.tr`.
+- Geçerlilik: 15 yıl. Bitiş tarihini bir yere not et; bu sertifika
+  kendiliğinden yenilenmiyor.
+
+Açılan sayfada iki metin var ve **özel anahtar bir daha gösterilmiyor**.
+İkisini de sunucuda şu dosyalara yaz:
+
+```bash
+mkdir -p certs && chmod 700 certs
+nano certs/origin.pem          # Origin Certificate bloğu
+nano certs/origin.key          # Private Key bloğu
+chmod 600 certs/origin.key
+```
+
+`certs/` hem `.gitignore` hem `.dockerignore` içinde: anahtar ne git'e ne
+de imaja girer. Caddy bu klasörü salt okunur görür.
+
+Sertifikayı sonradan değiştirmek gerekirse — süresi dolduğunda ya da anahtar
+sızdıysa — yeni dosyaları aynı yere yaz, sonra Caddy'yi yeniden başlat.
+Dosyalar yalnızca açılışta okunuyor, `git pull` ile gelen bir güncelleme
+Caddy'ye dokunmuyor:
+
+```bash
+docker compose -f compose.prod.yaml --env-file .env.production restart caddy
+```
+
+**Sonra DNS ve SSL ayarları:**
+
+1. DNS'te alan adı için bir **A kaydı** aç, sunucunun genel IP'si, kayıt
+   **Proxied** (turuncu bulut). Gri buluta hiç gerek yok: ACME doğrulaması
+   yapılmıyor, ayrıca güvenlik grubu origin'e yalnızca Cloudflare'den gelen
+   isteği alıyor.
+2. SSL/TLS → Overview → **Full (strict)**. Origin sertifikasını doğrulayan
+   mod bu; "Flexible" ya da "Full" seçilirse origin'e giden bağlantının
+   doğrulanmadığı bir boşluk kalır.
+3. SSL/TLS → Edge Certificates → **Always Use HTTPS** açık.
+4. Caching → HTML'i önbelleğe alan bir kural **kurma**: günün bulmacası ve
+   oyuncunun durumu her istekte sunucudan gelmeli. `/static/*` zaten bir
+   yıl önbellekli geliyor, Cloudflare onu kendiliğinden tutar.
+
+Statik adreslerin sonunda `?v=<özet>` var: dosya değişince adres de
+değişiyor, bu yüzden uzun önbellek güvenli ve dağıtımdan sonra önbellek
+temizlemek gerekmiyor.
+
+## 7. İlk açılış
 
 ```bash
 docker compose -f compose.prod.yaml --env-file .env.production up -d --build
@@ -144,6 +204,13 @@ yok. Kontrol etmek istersen:
 docker compose -f compose.prod.yaml --env-file .env.production logs web | head -30
 ```
 
+Caddy'nin sertifikayı okuduğunu da gör; dosyalar yoksa ya da bozuksa
+konteyner burada durur:
+
+```bash
+docker compose -f compose.prod.yaml --env-file .env.production logs caddy | tail -20
+```
+
 Yönetici hesabını aç (şifre sorulur, komut satırında görünmez):
 
 ```bash
@@ -151,32 +218,11 @@ docker compose -f compose.prod.yaml --env-file .env.production \
     exec web flask create-admin sen@ornek.com
 ```
 
-Site şu an sunucunun kendi adresinde ayakta, ama sertifika için alan adının
-sunucuya bakması gerekiyor. Sıradaki adım o.
+Son kontrol, artık alan adı üzerinden:
 
-## 7. Cloudflare
-
-1. DNS'te alan adı için bir **A kaydı** aç, sunucunun genel IP'si.
-2. Kaydı önce **DNS only** (gri bulut) bırak. Caddy sertifikayı böyle alır:
-
-   ```bash
-   docker compose -f compose.prod.yaml --env-file .env.production logs caddy | tail -20
-   ```
-
-   `certificate obtained successfully` satırını gör, sonra devam et.
-3. Kaydı **Proxied** (turuncu bulut) yap.
-4. SSL/TLS → Overview → **Full (strict)**.
-5. SSL/TLS → Edge Certificates → **Always Use HTTPS** açık. Cloudflare
-   ACME doğrulama adresini (`/.well-known/acme-challenge/`) bu
-   yönlendirmeden muaf tutar, yani sertifika yenilemesi turuncu bulutla da
-   çalışır.
-6. Caching → HTML'i önbelleğe alan bir kural **kurma**: günün bulmacası ve
-   oyuncunun durumu her istekte sunucudan gelmeli. `/static/*` zaten bir yıl
-   önbellekli geliyor, Cloudflare onu kendiliğinden tutar.
-
-Statik adreslerin sonunda `?v=<özet>` var: dosya değişince adres de
-değişiyor, bu yüzden uzun önbellek güvenli ve dağıtımdan sonra önbellek
-temizlemek gerekmiyor.
+```bash
+curl -I https://muamma.com.tr
+```
 
 ## 8. Güncelleme
 
