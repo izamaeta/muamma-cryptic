@@ -178,9 +178,49 @@ def test_the_production_example_has_the_keys_and_none_of_the_values():
     assert settings["FLASK_DEBUG"] == "0"
     assert settings["SITE_URL"].startswith("https://")
     assert settings["BACKUP_KEEP_DAYS"] == "30"
+    # The certificate comes from Cloudflare, so there is no ACME account
+    # and no address to notify about a renewal that never happens.
+    assert "ACME_EMAIL" not in settings
 
     # The example carries no secret, and no AWS key belongs here at all:
     # the server reads its own IAM role.
     assert settings["SECRET_KEY"] == ""
     assert settings["POSTGRES_PASSWORD"] == ""
     assert not [name for name in settings if "AWS_ACCESS" in name or "AWS_SECRET" in name]
+
+
+def caddy_directives():
+    """Caddyfile lines that carry configuration, without the comments."""
+    caddyfile = (ROOT / "docker" / "Caddyfile").read_text(encoding="utf-8")
+    lines = (line.strip() for line in caddyfile.splitlines())
+    return [line for line in lines if line and not line.startswith("#")]
+
+
+def test_caddy_serves_the_origin_certificate_and_asks_for_none():
+    """The certificate is read from disk; nothing is requested over ACME."""
+    directives = caddy_directives()
+
+    assert "tls /certs/origin.pem /certs/origin.key" in directives
+    # An email in the global block, or an explicit issuer, would turn
+    # automatic HTTPS back on and need port 80 open to the whole internet.
+    assert not [
+        line
+        for line in directives
+        if line.startswith(("email ", "acme_", "issuer ", "tls {"))
+    ]
+
+
+def test_the_certificate_reaches_caddy_read_only():
+    compose = (ROOT / "compose.prod.yaml").read_text(encoding="utf-8")
+
+    assert "- ./certs:/certs:ro" in compose
+    # The domain is all Caddy needs from the environment now.
+    assert "ACME_EMAIL" not in compose
+
+
+@pytest.mark.parametrize("ignore_file", [".gitignore", ".dockerignore"])
+def test_the_private_key_is_ignored_everywhere(ignore_file):
+    """Neither git nor the build context may pick up the origin key."""
+    patterns = (ROOT / ignore_file).read_text(encoding="utf-8").split()
+
+    assert "certs/" in patterns
