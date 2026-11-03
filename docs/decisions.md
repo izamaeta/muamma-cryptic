@@ -1012,3 +1012,75 @@ the editor is the one who knows whether this is that case. The check
 lives in `muamma/puzzles.py` next to the other things that are true about
 a puzzle, with a thin wrapper in `admin/services.py` beside the Sunday
 and long word warnings, so the rule has one definition and two callers.
+
+## Browser tests
+
+The unit suite can be entirely green while the game is unplayable. It
+calls the API directly, so it never finds out whether **Kontrol et** is
+wired up, whether Enter submits, or whether the result window opens; all
+three were once broken behind 288 passing tests. `tests/e2e/` closes that
+gap by playing the game in Chromium through Playwright: typing an answer,
+pressing the button, opening the seal, reloading the page.
+
+They are a separate suite rather than more of the same one. They need
+PostgreSQL and a browser and take about a minute, where `pytest` takes
+twelve seconds and needs nothing, and that speed is worth keeping. So
+they carry an `e2e` marker, the default `addopts` deselects it, and
+`pytest -m e2e` opts in. CI runs them as their own job, in parallel with
+the suite it already had.
+
+Playwright is pinned in `requirements-dev.txt` only, with its transitive
+dependencies, and never in `requirements.txt`. The image installs only
+`requirements.txt` and `.dockerignore` drops `tests/`, so neither the
+browser nor the tests can reach production.
+
+### A real server, not a test client
+
+The tests drive a waitress process started for the session, configured
+the way production is: CSRF on, rate limits on, security headers on,
+`TRUSTED_PROXY_HOPS` set. A Flask test client would have made the
+fixtures easier and proved much less — the point is to exercise the same
+request path the browser really uses, including the CSRF token the page
+puts in a meta tag and the JSON the fetch calls send.
+
+Rate limits staying on creates one problem: the limiter keys on the
+player, and before the first action there is no player, so every test
+would share the one bucket belonging to `127.0.0.1` and the later tests
+in a run would start getting 429s. Rather than turn the limits off, each
+browser context sends its own `X-Forwarded-For` address, which the
+already-trusted ProxyFix turns into a distinct client. The limits are
+real, the keys are real, and no test can spend another test's quota.
+
+### A database of their own
+
+The tests write to `muamma_e2e`, never to the development database. It is
+created on first run, built by Alembic rather than `create_all` so the
+migrations are what is being tested, and truncated before each test. The
+name has to contain `e2e` or the fixture refuses to run, which is what
+stops a stray `DATABASE_URL` from pointing the truncation at real data.
+
+Each test inserts its own puzzles with answers it knows, instead of
+leaning on `flask seed-demo`. Demo content is there to look at by hand
+and will keep changing; a test that depends on it breaks for reasons that
+have nothing to do with the game.
+
+### Failing on what the browser complains about
+
+An assertion only checks what it was told to check. A page can satisfy
+every assertion while throwing exceptions, logging errors and 404ing on a
+stylesheet. So every test also fails on a page error, a console error, or
+any request that came back 4xx or 5xx, static files included. A test that
+means to provoke a failed response allows it by status and address, which
+keeps the allowance narrow and visible in the test that needs it.
+
+### Clicking the label of an assist button
+
+Writing these tests turned up a real defect, left unfixed here because
+this change is meant to add tests and not to change behaviour. The
+assists handler is delegated on `.helpers` and reads
+`event.target.dataset.action`. **Harf aç** and **Mührü aç** wrap their
+text in a span for the narrow layout, so a click that lands on the words
+has the span as its target, finds no action, and does nothing; only the
+padding around the label works. **İpucu** has no inner span and is fine.
+A strict `xfail` records it, so the suite is honest about it today and
+will ask for the marker to be dropped the moment the handler is fixed.

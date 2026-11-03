@@ -105,14 +105,30 @@ committed; `*.puzzles.json` and `exports/` are ignored for that reason.
 ## Tests and CI
 
 ```bash
-pytest
+pytest                               # the unit suite, no services needed
+pytest -m e2e                        # the browser tests
 ```
 
-The suite runs on SQLite and needs no services. GitHub Actions runs it on
-every push and pull request, then applies the migrations to a real
-PostgreSQL 17 and runs `flask db check` to compare the models against what
-the migrations built. A second job builds the Docker image and throws it
-away. Nothing in the workflow needs a secret.
+The suite runs on SQLite and needs no services. Alongside it,
+`tests/e2e/` plays the game in a real Chromium against a real server, so
+a broken game flow is caught even when the unit tests are all green.
+Those tests are marked `e2e` and the default run skips them; they need
+PostgreSQL and a browser:
+
+```bash
+docker compose up -d db
+playwright install chromium
+```
+
+[docs/e2e.md](docs/e2e.md) covers them, including the database they
+create for themselves.
+
+GitHub Actions runs the suite on every push and pull request, then
+applies the migrations to a real PostgreSQL 17 and runs `flask db check`
+to compare the models against what the migrations built. A second job
+runs the browser tests and uploads traces and screenshots when they fail;
+a third builds the Docker image and throws it away. Nothing in the
+workflow needs a secret.
 
 ## Deployment
 
