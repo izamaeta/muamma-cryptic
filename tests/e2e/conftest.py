@@ -26,7 +26,6 @@ SERVER_SCRIPT = Path(__file__).with_name("server.py")
 SECRET_KEY = "e2e-only-not-a-real-key"
 STARTUP_TIMEOUT = 60.0
 ASSERTION_TIMEOUT = 10_000
-LABEL_FREE_EDGE = 3
 RESOURCE_ECHO = "Failed to load resource"
 
 _addresses = itertools.count(1)
@@ -423,17 +422,17 @@ class Game:
         return self.section.locator(f"[data-action={action}]")
 
     def assist(self, action):
-        """Click an assist button beside its label.
+        """Click an assist button in the middle of its label.
 
-        The handler reads event.target, so a click that lands on the label
-        of Harf aç or Mührü aç does nothing; see the xfail in
-        test_e2e_assists.py. The label is centred, so the left edge is
-        always the button itself.
+        Harf aç and Mührü aç wrap their label in a span, so the click lands
+        below the button and the handler has to walk back up to it. The
+        middle of the label is where a player aims, so it is what the tests
+        click.
         """
         self.idle()
         button = self.assist_button(action)
-        box = button.bounding_box()
-        button.click(position={"x": LABEL_FREE_EDGE, "y": box["height"] / 2})
+        label = button.locator("span:visible")
+        (label if label.count() else button).click()
 
 
 @pytest.fixture

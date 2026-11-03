@@ -1084,3 +1084,33 @@ has the span as its target, finds no action, and does nothing; only the
 padding around the label works. **İpucu** has no inner span and is fine.
 A strict `xfail` records it, so the suite is honest about it today and
 will ask for the marker to be dropped the moment the handler is fixed.
+
+## Delegated clicks read the button, not the target
+
+The assist row listens on `.helpers` and used to read
+`event.target.dataset.action`. Two of its three buttons wrap their label
+in `<span class="wide">` and `<span class="narrow">` so the text can
+shorten under 400px, which means a click on the words "Harf aç" or
+"Mührü aç" lands on the span. The span carries no `data-action`, so the
+handler returned early and the button did nothing — only its padding
+worked, and only "İpucu", whose label is bare text, worked everywhere.
+
+The handler now walks up with `event.target.closest("[data-action]")` and
+checks `helpers.contains(button)` before acting. `closest` can leave the
+row entirely when the click lands on the row's own padding, and an
+ancestor of `.helpers` with a `data-action` of its own would otherwise be
+read as an assist.
+
+Nothing else delegates this way. Every other button group — share,
+glossary, stats, theme, the guide's tabs and anatomy parts — binds its
+listener to each element, so the element is already in hand. The backdrop
+check in `result.js` stays an exact `event.target === dialog`: there the
+point is that the click missed the panel, and `closest` would close the
+window on every click inside it.
+
+The e2e helper used to aim at the left edge of an assist button to dodge
+its label, which is how the bug survived the browser tests. It now clicks
+the middle of the visible label, where a player aims, so every assist
+test crosses the span. The widths in `test_e2e_assists.py` straddle the
+breakpoint: at 320, 360 and 390 the short label is the one on screen, at
+430 the long one, and both have to answer a click.

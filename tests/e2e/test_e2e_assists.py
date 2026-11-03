@@ -5,6 +5,25 @@ from playwright.sync_api import expect
 
 pytestmark = pytest.mark.e2e
 
+PHONE_HEIGHT = 844
+WIDTHS = [320, 360, 390, 430]
+LABEL_BREAKPOINT = 400
+
+# the labels shorten under the breakpoint, so the span a player's finger
+# lands on is not the same one at every width
+LABELS = {
+    "letter": {"wide": "Harf aç", "narrow": "Harf"},
+    "reveal": {"wide": "Mührü aç", "narrow": "Mühür"},
+}
+
+
+def assert_the_action_started(game, action):
+    """Proof that the click reached the handler, whichever assist it was."""
+    if action == "letter":
+        expect(game.filled).to_have_count(1)
+    else:
+        expect(game.confirm).to_be_visible()
+
 
 def test_the_first_hint_names_the_definition_and_highlights_it(page, daily, game):
     page.goto("/")
@@ -31,16 +50,29 @@ def test_the_hint_and_its_highlight_survive_a_reload(page, daily, game):
     expect(game.definition).to_have_text(daily.definition)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="game.js reads event.target, so a click on the label of a button "
-    "with an inner span never reaches the handler",
-)
 @pytest.mark.parametrize("action", ["letter", "reveal"])
 def test_clicking_the_label_of_an_assist_button_works(page, daily, game, action):
     page.goto("/")
-    game.assist_button(action).locator("span:visible").click()
-    expect(game.section).to_have_attribute("data-busy", "1")
+    game.assist(action)
+    assert_the_action_started(game, action)
+
+
+@pytest.mark.parametrize("action", ["letter", "reveal"])
+@pytest.mark.parametrize("width", WIDTHS)
+def test_the_assist_labels_work_at_every_phone_width(
+    page, daily, game, width, action
+):
+    page.set_viewport_size({"width": width, "height": PHONE_HEIGHT})
+    page.goto("/")
+
+    label = game.assist_button(action).locator("span:visible")
+    expect(label).to_have_count(1)
+    expect(label).to_have_text(
+        LABELS[action]["narrow" if width <= LABEL_BREAKPOINT else "wide"]
+    )
+
+    game.assist(action)
+    assert_the_action_started(game, action)
 
 
 def test_the_letter_button_never_opens_the_last_letter(page, daily, game, guard):

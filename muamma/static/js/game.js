@@ -317,8 +317,10 @@ if (section) {
   });
 
   helpers.addEventListener("click", (event) => {
-    const action = event.target.dataset.action;
-    if (!action) return;
+    // the labels are wrapped in spans, so the click lands below the button
+    const button = event.target.closest("[data-action]");
+    if (!button || !helpers.contains(button)) return;
+    const action = button.dataset.action;
 
     run(async () => {
       feedback.textContent = "";
