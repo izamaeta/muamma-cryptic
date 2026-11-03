@@ -37,13 +37,22 @@ def test_header_shows_the_logo(client):
     assert "img/logo/logo-192.png" in html
 
 
-def test_band_shows_the_date_and_sealed_state(client):
+def test_band_shows_the_envelope_seal_and_face_title(client):
     add_puzzle()
     html = client.get("/").get_data(as_text=True)
     assert 'data-state="sealed"' in html
     assert "10 Ekim 2026" in html
-    assert "MÜHÜRLÜ" in html
-    assert 'class="seal seal-whole"' in html
+    assert "Bugünün muamması" in html
+    assert 'class="env-layer env-pocket"' in html
+    assert 'class="env-layer gs-whole"' in html
+    for old_partial in (
+        "band-wash",
+        "envelope-flap",
+        "seal-cap",
+        '"seal seal-whole"',
+        '"seal seal-broken"',
+    ):
+        assert old_partial not in html
 
 
 def test_solved_puzzle_reopens_as_opened(client):
@@ -54,6 +63,8 @@ def test_solved_puzzle_reopens_as_opened(client):
     assert 'data-state="opened"' in html
     assert "Mühür kırıldı" in html
     assert "Muamma çözüldü!" in html
+    assert 'class="env-layer gs-whole"' not in html
+    assert "has-band" in html
 
 
 def test_revealed_puzzle_reopens_as_opened(client):
@@ -63,6 +74,9 @@ def test_revealed_puzzle_reopens_as_opened(client):
     html = client.get("/").get_data(as_text=True)
     assert 'data-state="opened"' in html
     assert "Mühür açıldı" in html
+    assert "Cevaba bakıldı" in html
+    assert 'class="env-layer gs-whole"' not in html
+    assert "has-band" in html
 
 
 def test_unfinished_puzzle_stays_sealed_on_reload(client):
@@ -73,10 +87,17 @@ def test_unfinished_puzzle_stays_sealed_on_reload(client):
     assert 'data-state="sealed"' in html
 
 
+def test_practice_band_title_is_short(client):
+    puzzle = add_puzzle(kind="practice", publish_date=None)
+    html = client.get(f"/tadimlik/{puzzle.id}").get_data(as_text=True)
+    assert "Tadımlık" in html
+    assert "Tadımlık muamma" not in html
+
+
 def test_pages_without_a_band_are_not_tall(client):
     html = client.get("/gizlilik").get_data(as_text=True)
     assert "has-band" not in html
-    assert "seal-whole" not in html
+    assert "gs-whole" not in html
 
 
 def test_input_limit_matches_the_answer_length(client):

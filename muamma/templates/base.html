@@ -25,6 +25,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  {% if puzzle is defined and puzzle %}
+    {% from "partials/_band.html" import preload_block with context %}
+    {{ preload_block(play) }}
+  {% endif %}
 </head>
 <body class="{% block body_class %}{% endblock %}" data-state="{% block state %}sealed{% endblock %}">
   <div class="band">

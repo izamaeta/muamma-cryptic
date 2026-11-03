@@ -1,17 +1,128 @@
+{#- The envelope scene: bitmap layers only (docs/zarf-sahnesi.md), positioned
+    and animated by CSS/JS, never redrawn. One place builds every image
+    address so the preload links in <head> and the <img> tags below never
+    drift apart. Included for the markup; `preload_block` is imported
+    separately into <head>. -#}
+
+{%- macro env_url(name) -%}
+{{ url_for('static', filename='img/envelope/' ~ name ~ '@2x.webp') }}
+{%- endmacro -%}
+
+{%- macro gold_url(name, res) -%}
+{{ url_for('static', filename='img/gold-seal/' ~ name ~ '@' ~ res ~ 'x.webp') }}
+{%- endmacro -%}
+
+{%- macro env_img(name, classes, w, h, eager=true) -%}
+  {%- if eager -%}
+<img class="env-layer {{ classes }}" alt="" width="{{ w }}" height="{{ h }}" src="{{ env_url(name) }}">
+  {%- else -%}
+<img class="env-layer {{ classes }} env-deferred" alt="" width="{{ w }}" height="{{ h }}" data-src="{{ env_url(name) }}">
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro gold_img(name, classes, w, h, hidden=false, srcset=false) -%}
+<img class="env-layer {{ classes }}" alt="" width="{{ w }}" height="{{ h }}"{% if hidden %} hidden{% endif %}
+     src="{{ gold_url(name, 2) }}"{% if srcset %} srcset="{{ gold_url(name, 2) }} 2x, {{ gold_url(name, 3) }} 3x"{% endif %}>
+{%- endmacro -%}
+
+{%- macro preload_env(name, priority='auto') -%}
+<link rel="preload" as="image" href="{{ env_url(name) }}" fetchpriority="{{ priority }}">
+{%- endmacro -%}
+
+{%- macro preload_gold(name, priority='auto') -%}
+<link rel="preload" as="image" href="{{ gold_url(name, 2) }}" imagesrcset="{{ gold_url(name, 2) }} 2x, {{ gold_url(name, 3) }} 3x" fetchpriority="{{ priority }}">
+{%- endmacro -%}
+
+{%- macro preload_block(play) -%}
+  {%- if play and play.status != "in_progress" -%}
+    {{ preload_env("env-back") }}
+    {{ preload_env("env-flap-back") }}
+    {{ preload_env("letter") }}
+    {{ preload_env("env-pocket") }}
+    {{ preload_env("env-shadow") }}
+  {%- else -%}
+    {{ preload_env("env-pocket", "high") }}
+    {{ preload_env("env-flap-front", "high") }}
+    {{ preload_env("env-flap-shadow") }}
+    {{ preload_env("env-shadow") }}
+    {{ preload_env("seal-shadow") }}
+    {{ preload_gold("whole", "high") }}
+  {%- endif -%}
+{%- endmacro -%}
+
+{#- This body also runs (output discarded) when base.html imports the
+    preload macros above; the imported scope lacks band_title/band_date,
+    so default them defensively instead of erroring. -#}
+{% set play = play if play is defined else none %}
+{% set band_title = band_title if band_title is defined else "" %}
+{% set band_date = band_date if band_date is defined else none %}
 {% set status = play.status if play else none %}
-<div class="band-wash"></div>
-<p class="band-date">{{ (band_date or today) | long_date }}</p>
-<div class="seal-layer">
-  {% include "partials/_seal.html" %}
-  {% include "partials/_seal_broken.html" %}
+{% set finished = status is not none and status != "in_progress" %}
+{% set solved = status == "solved" %}
+{% set title = "Muamma çözüldü!" if solved else ("Cevaba bakıldı" if finished else band_title) %}
+{% set shown_date = (band_date or today) | long_date %}
+
+<div class="band-light" aria-hidden="true"></div>
+<div class="envelope-scene">
+  <div class="env-stage">
+    {{ env_img("env-shadow", "env-shadow", 280, 44) }}
+    {{ env_img("env-back", "env-back", 240, 24, eager=finished) }}
+
+    <div class="env-layer env-flap" aria-hidden="true">
+      <span class="env-flap-face env-flap-front">{{ env_img("env-flap-front", "", 240, 62) }}</span>
+      <span class="env-flap-face env-flap-back">{{ env_img("env-flap-back", "", 240, 62, eager=finished) }}</span>
+    </div>
+
+    <div class="env-layer env-mouth-glow" aria-hidden="true"></div>
+
+    <div class="env-layer env-letter{{ ' reveal' if finished and not solved else '' }}">
+      {{ env_img("letter", "", 196, 150, eager=finished) }}
+      <p class="env-letter-date">{{ shown_date if finished else '' }}</p>
+      <p class="env-letter-title">{{ (("Mühür kırıldı" if solved else "Mühür açıldı") if finished else '') }}</p>
+      <hr class="env-letter-rule">
+    </div>
+
+    {{ env_img("env-pocket", "env-pocket", 240, 150, eager=true) }}
+
+    <div class="env-layer env-face">
+      <p class="env-face-date">{{ shown_date }}</p>
+      <p class="env-face-title">{{ title }}</p>
+    </div>
+
+    {{ env_img("env-flap-shadow", "env-flap-shadow", 260, 84) }}
+
+    {%- if not finished %}
+    {#- A puzzle rendered already finished (reload, archive) never shows
+        the seal: no gold-seal asset is requested for it. A puzzle solved
+        live always renders sealed first, so the mount is always here for
+        envelope.js to animate when the guess comes back correct. -#}
+    <div class="env-layer env-seal-mount" aria-hidden="true">
+      <div class="env-layer env-seal-glow"></div>
+      {{ env_img("seal-shadow", "gs-shadow", 96, 96) }}
+      <div class="env-layer env-seal-ring"></div>
+      {{ gold_img("whole", "gs-whole", 323, 330, srcset=true) }}
+      {{ gold_img("cracked", "gs-cracked", 310, 308, hidden=true) }}
+      {{ gold_img("piece1", "gs-piece gs-piece-1", 82, 111, hidden=true) }}
+      {{ gold_img("piece2", "gs-piece gs-piece-2", 194, 203, hidden=true) }}
+      {{ gold_img("piece3", "gs-piece gs-piece-3", 139, 139, hidden=true) }}
+      {{ gold_img("piece4", "gs-piece gs-piece-4", 115, 136, hidden=true) }}
+      {{ gold_img("piece5", "gs-piece gs-piece-5", 235, 222, hidden=true) }}
+      {{ gold_img("piece6", "gs-piece gs-piece-6", 124, 143, hidden=true) }}
+      <div class="env-layer env-flash" aria-hidden="true"></div>
+    </div>
+    {%- endif %}
+
+    <div class="env-flecks" aria-hidden="true"></div>
+  </div>
 </div>
-<div class="seal-cap">
-  <p class="seal-label">
-    {%- if status == "solved" -%}Mühür kırıldı
-    {%- elif status == "revealed" -%}Mühür açıldı
-    {%- else -%}MÜHÜRLÜ
-    {%- endif -%}
-  </p>
-  <h1 class="seal-title">{{ band_title }}</h1>
-  {% if status == "solved" %}<p class="seal-note">Muamma çözüldü!</p>{% endif %}
-</div>
+
+{#- the layers are decorative, so the state is said in words instead -#}
+<p class="envelope-status visually-hidden" role="status">
+  {%- if not finished -%}
+    Zarf mühürlü.
+  {%- elif solved -%}
+    Mühür kırıldı.
+  {%- else -%}
+    Mühür açıldı.
+  {%- endif -%}
+</p>

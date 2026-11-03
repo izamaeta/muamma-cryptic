@@ -202,13 +202,6 @@ export async function spinNumber(element, value) {
   await animation.finished.catch(() => {});
 }
 
-export async function fadeWash(wash) {
-  if (!wash || !motionOk()) return;
-  wash.classList.add("active");
-  await play(wash, [{ opacity: 1 }, { opacity: 0 }], { duration: 700 });
-  wash.classList.remove("active");
-}
-
 export function flash(element, className, ms = 520) {
   if (!motionOk() || !element) return;
   element.classList.remove(className);

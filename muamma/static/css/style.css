@@ -14,8 +14,16 @@
   --sky: #bad6eb;
   --red: #b31b1b;
   --red-ink: #b31b1b;
-  --seal-ring: #b31b1b;
   --fodder: #334eac;
+  --gold: #b8962e;
+  --gold-ink: #9a7b1f;
+  --gold-fleck: #f3d27a;
+  --gold-flash: #fff1c9;
+  --env-ink-muted: #7a6f5c;
+  --band-ink: #fff9f0;
+  --band-accent: #bad6eb;
+  --def-bg: #d0e3ff;
+  --def-ink: #081f5c;
   --field-bg: #fffdf9;
 
   --card-shadow:
@@ -41,9 +49,8 @@
     0 3px 8px rgb(8 31 92 / 25%);
   --tile-solved-ink: #fff9f0;
 
-  --band-sealed-grad:
+  --band-grad:
     radial-gradient(70% 85% at 50% 108%, #2a4497 0%, #15307a 38%, #081f5c 64%, #061748 100%);
-  --seal-glow: radial-gradient(60% 55% at 50% 100%, rgb(112 150 209 / 38%) 0%, transparent 70%);
 
   --grain-blend: multiply;
   --grain-opacity: 0.18;
@@ -52,33 +59,6 @@
   --sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   color-scheme: light;
-}
-
-[data-state="sealed"] {
-  --band-grad: var(--band-sealed-grad);
-  --band-ink: #fff9f0;
-  --band-accent: var(--sky);
-  --seal-light: #7096d1;
-  --seal-mid: #334eac;
-  --seal-deep: #1f357f;
-  --seal-line: #22367f;
-  --seal-ink: #fff9f0;
-  --def-bg: #d0e3ff;
-  --def-ink: #081f5c;
-}
-
-[data-state="opened"] {
-  --band-grad:
-    radial-gradient(120% 90% at 50% 100%, #d0e3ff 0%, #bad6eb 50%, #a3c4e0 100%);
-  --band-ink: #081f5c;
-  --band-accent: #081f5c;
-  --seal-light: #334eac;
-  --seal-mid: #081f5c;
-  --seal-deep: #04103a;
-  --seal-line: #334eac;
-  --seal-ink: #fff9f0;
-  --def-bg: #d0e3ff;
-  --def-ink: #081f5c;
 }
 
 :root[data-theme="dark"] {
@@ -115,31 +95,16 @@
     0 3px 8px rgb(0 0 0 / 45%);
   --tile-solved-ink: #081f5c;
 
-  --band-sealed-grad:
+  --band-grad:
     radial-gradient(70% 85% at 50% 108%, #1a3480 0%, #0c1f5a 40%, #061440 70%, #030a26 100%);
-  --seal-glow: radial-gradient(60% 55% at 50% 100%, rgb(112 150 209 / 28%) 0%, transparent 70%);
+  --band-ink: #f7f2eb;
+  --def-bg: #334eac;
+  --def-ink: #fff9f0;
 
   --grain-blend: screen;
   --grain-opacity: 0.3;
 
   color-scheme: dark;
-}
-
-:root[data-theme="dark"] [data-state="sealed"] {
-  --band-ink: #f7f2eb;
-  --seal-deep: #1a2c6e;
-  --seal-line: #1a2c6e;
-  --def-bg: #334eac;
-  --def-ink: #fff9f0;
-}
-
-:root[data-theme="dark"] [data-state="opened"] {
-  --band-grad:
-    radial-gradient(120% 90% at 50% 100%, #4a6abf 0%, #334eac 50%, #27407f 100%);
-  --band-ink: #f7f2eb;
-  --band-accent: #f7f2eb;
-  --def-bg: #334eac;
-  --def-ink: #fff9f0;
 }
 
 *,
@@ -223,51 +188,29 @@ a:hover {
   padding: 1.5rem 1rem 3rem;
 }
 
-/* Band, header and seal */
+/* Band and header */
 
 .band {
-  --band-h: 0px;
-  --seal-size: min(150vw, 1100px);
-  --seal-top-sealed: 96px;
-  --seal-top: var(--seal-top-sealed);
-  --cap-offset: 0.181;
   position: relative;
   background: var(--band-grad);
   color: var(--band-ink);
 }
 
-.band-wash {
+/* a static stage light behind the envelope, not tied to page state */
+.band-light {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--band-sealed-grad);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.band-wash.active {
-  opacity: 1;
-}
-
-.seal-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.seal-layer::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--seal-glow);
+  background: radial-gradient(55% 60% at 50% 72%, #2a4497 0%, transparent 70%);
   pointer-events: none;
 }
 
 .has-band .band {
-  --cap-room: 100px;
-  --band-h: calc(var(--seal-top-sealed) + var(--seal-size) * var(--cap-offset) + var(--cap-room));
-  min-height: var(--band-h);
+  --header-h: 64px;
+  --footer-room: 34px;
+  min-height: calc(
+    var(--header-h) + var(--headroom, 68px) + var(--env-h, 165px) + var(--footer-room)
+  );
 }
 
 .site-header {
@@ -404,10 +347,6 @@ a:hover {
   border-radius: 50%;
 }
 
-[data-state="opened"] .streak {
-  background: rgb(11 31 92 / 12%);
-}
-
 .icon-button {
   display: grid;
   place-items: center;
@@ -425,10 +364,6 @@ a:hover {
   background: rgb(255 255 255 / 14%);
 }
 
-[data-state="opened"] .icon-button:hover {
-  background: rgb(11 31 92 / 12%);
-}
-
 .icon-button svg {
   width: 22px;
   height: 22px;
@@ -439,133 +374,344 @@ a:hover {
   stroke-linejoin: round;
 }
 
-.band-date {
+/* Envelope scene (docs/zarf-sahnesi.md). Bitmaps only, positioned and
+   animated; no redrawing in CSS or SVG. */
+
+.envelope-scene {
   position: relative;
   z-index: 1;
-  margin: 0.25rem 0 0;
-  color: var(--band-accent);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  display: flex;
+  justify-content: center;
+  padding-top: 6px;
+  padding-bottom: var(--footer-room, 34px);
+  pointer-events: none;
+}
+
+.env-stage {
+  --env-w: clamp(204px, 62vw, 264px);
+  --env-h: calc(var(--env-w) * 0.625);
+  --flap-h: calc(var(--env-w) * 0.258);
+  --letter-w: calc(var(--env-w) * 0.817);
+  --seal-d: calc(var(--env-w) * 0.267);
+  --headroom: calc(var(--flap-h) + 6px);
+  position: relative;
+  width: var(--env-w);
+  height: calc(var(--headroom) + var(--env-h));
+}
+
+.env-layer {
+  position: absolute;
+  display: block;
+}
+
+.env-shadow {
+  top: calc(var(--headroom) + var(--env-h) - var(--env-w) * 0.1833 * 0.35);
+  left: 50%;
+  z-index: 1;
+  width: calc(var(--env-w) * 1.1667);
+  height: calc(var(--env-w) * 0.1833);
+  transform: translateX(-50%);
+}
+
+.env-back {
+  top: var(--headroom);
+  left: 0;
+  z-index: 2;
+  width: var(--env-w);
+  height: calc(var(--env-w) * 0.1);
+}
+
+/* the hinged flap: front face closed over the pocket, back face (liner)
+   shown once rotated past 90deg. JS swaps z-index at the midpoint so the
+   same element reads as the closed flap (above the pocket) or the open
+   flap lying behind the letter. */
+.env-flap {
+  top: var(--headroom);
+  left: 0;
+  z-index: 9;
+  width: var(--env-w);
+  height: var(--flap-h);
+  transform-style: preserve-3d;
+  transform-origin: top center;
+}
+
+[data-state="opened"] .env-flap {
+  z-index: 3;
+  transform: rotateX(-180deg);
+}
+
+.env-flap-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+}
+
+.env-flap-back {
+  transform: rotateX(180deg);
+}
+
+.env-mouth-glow {
+  top: calc(var(--headroom) + var(--flap-h) * 0.5);
+  left: 50%;
+  z-index: 4;
+  width: calc(var(--env-w) * 0.9);
+  height: calc(var(--env-w) * 0.5);
+  background: radial-gradient(circle, rgb(255 255 255 / 55%) 0%, transparent 72%);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+}
+
+[data-state="opened"] .env-mouth-glow {
+  opacity: 0.3;
+}
+
+.env-letter {
+  top: var(--headroom);
+  left: 50%;
+  z-index: 5;
+  width: var(--letter-w);
+  height: var(--env-h);
   text-align: center;
+  opacity: 0;
+  transform: translate(-50%, 40px);
+}
+
+[data-state="opened"] .env-letter {
+  opacity: 1;
+  transform: translate(-50%, -52px);
+}
+
+.env-letter-date {
+  position: relative;
+  margin: 0.9em 0 0;
+  color: var(--gold-ink);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
-.seal {
-  position: absolute;
-  top: var(--seal-top);
-  left: 50%;
-  width: var(--seal-size);
-  height: var(--seal-size);
-  transform: translateX(-50%);
-  filter: drop-shadow(0 -6px 22px rgb(0 0 0 / 30%));
-  animation: seal-rise 1.6s ease-out both;
+.env-letter.reveal .env-letter-date {
+  color: var(--muted);
 }
 
-/* the wax takes its light from the top left; the stops are driven by the
-   theme and the page state, so the gradient follows the palette */
-.seal-stop-light {
-  stop-color: var(--seal-light);
-}
-
-.seal-stop-mid {
-  stop-color: var(--seal-mid);
-}
-
-.seal-stop-deep {
-  stop-color: var(--seal-deep);
-}
-
-.seal-whole .seal-body {
-  fill: url("#muhur-g");
-}
-
-.seal-broken .seal-body {
-  fill: url("#muhur-kirik-g");
-}
-
-/* a sliver of light just under the rings, as if they were pressed in */
-.seal-emboss {
-  stroke: rgb(255 255 255 / 30%);
-}
-
-.seal-ring {
-  stroke: var(--seal-ring);
-}
-
-.seal-line {
-  stroke: var(--seal-line);
-}
-
-/* the wax thickens at the rim */
-.seal-edge {
-  stroke: rgb(0 0 0 / 14%);
-}
-
-[data-state="sealed"] .seal-broken,
-[data-state="opened"] .seal-whole {
-  display: none;
-}
-
-[data-state="opened"] .band {
-  --seal-top: 178px;
-}
-
-.seal-half {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-[data-state="opened"] .seal-half-left {
-  animation: seal-crack-left 600ms ease-out both;
-}
-
-[data-state="opened"] .seal-half-right {
-  animation: seal-crack-right 600ms ease-out both;
-}
-
-.seal-cap {
-  position: absolute;
-  top: calc(var(--seal-top) + var(--seal-size) * var(--cap-offset));
-  right: 0;
-  left: 0;
-  z-index: 1;
-  width: calc(var(--seal-size) * 0.46);
-  margin-inline: auto;
-  color: var(--seal-ink);
-  text-align: center;
-}
-
-[data-state="opened"] .seal-cap {
-  top: calc(var(--seal-top) - 4.5rem);
-  width: auto;
-  max-width: 32rem;
-  padding-inline: 1rem;
-  color: var(--band-ink);
-}
-
-.seal-label {
-  margin: 0;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-}
-
-.seal-title {
-  margin: 0.2rem 0 0;
-  font-size: 1.35rem;
+.env-letter-title {
+  position: relative;
+  margin: 0.3em 0 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 23px;
+  font-style: italic;
   font-weight: 600;
 }
 
-.seal-note {
-  margin: 0.2rem 0 0;
+.env-letter-rule {
+  position: relative;
+  width: 36px;
+  height: 2px;
+  margin: 0.5em auto 0;
+  background: var(--gold);
+  border: 0;
+}
+
+.env-pocket {
+  top: var(--headroom);
+  left: 0;
+  z-index: 6;
+  width: var(--env-w);
+  height: var(--env-h);
+}
+
+.env-face {
+  top: calc(var(--headroom) + var(--flap-h) + var(--seal-d) * 0.5 + 10px);
+  left: 50%;
+  z-index: 7;
+  width: calc(var(--env-w) * 0.82);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.env-face-date {
+  margin: 0;
+  color: var(--env-ink-muted);
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+.env-face-title {
+  margin: 0.25em 0 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 600;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 90%);
+}
+
+.env-flap-shadow {
+  top: calc(var(--headroom) - var(--env-w) * 0.35 * 0.14);
+  left: 50%;
+  z-index: 8;
+  width: calc(var(--env-w) * 1.0833);
+  height: calc(var(--env-w) * 0.35);
+  transform: translateX(-50%);
+}
+
+[data-state="opened"] .env-flap-shadow {
+  opacity: 0;
+}
+
+.env-seal-mount {
+  top: calc(var(--headroom) + var(--flap-h));
+  left: 50%;
+  z-index: 10;
+  width: var(--seal-d);
+  height: var(--seal-d);
+  transform: translate(-50%, -50%);
+}
+
+[data-state="opened"] .env-seal-mount {
+  display: none;
+}
+
+.env-seal-glow {
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: calc(var(--seal-d) * 2.4);
+  height: calc(var(--seal-d) * 2.4);
+  background: radial-gradient(circle, var(--gold-flash) 0%, transparent 70%);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+}
+
+.env-seal-ring {
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: var(--seal-d);
+  height: var(--seal-d);
+  opacity: 0;
+  border: 1px solid rgb(184 150 46 / 60%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.gs-shadow {
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  width: calc(var(--seal-d) * 1.15);
+  height: calc(var(--seal-d) * 1.15);
+  opacity: 0.6;
+  transform: translate(-50%, -50%);
+}
+
+.gs-whole,
+.gs-cracked,
+.gs-piece {
+  top: 50%;
+  left: 50%;
+  z-index: 4;
+  filter: drop-shadow(0 -2px 6px rgb(0 0 0 / 30%));
+}
+
+.gs-whole {
+  width: calc(var(--seal-d) * 1.0386);
+  height: calc(var(--seal-d) * 1.0611);
+  transform: translate(-50%, -50%);
+}
+
+.gs-cracked {
+  width: calc(var(--seal-d) * 1.0403);
+  height: calc(var(--seal-d) * 1.0336);
+  transform: translate(-50%, -50%);
+}
+
+.gs-piece {
+  transform: translate(-50%, -50%);
+}
+
+.gs-piece-1 {
+  --dx: 0.113;
+  --dy: -0.397;
+  width: calc(var(--seal-d) * 0.2636);
+  height: calc(var(--seal-d) * 0.3569);
+}
+
+.gs-piece-2 {
+  --dx: -0.228;
+  --dy: -0.23;
+  width: calc(var(--seal-d) * 0.6238);
+  height: calc(var(--seal-d) * 0.6527);
+}
+
+.gs-piece-3 {
+  --dx: 0.339;
+  --dy: -0.307;
+  width: calc(var(--seal-d) * 0.447);
+  height: calc(var(--seal-d) * 0.447);
+}
+
+.gs-piece-4 {
+  --dx: 0.394;
+  --dy: 0.013;
+  width: calc(var(--seal-d) * 0.3698);
+  height: calc(var(--seal-d) * 0.4373);
+}
+
+.gs-piece-5 {
+  --dx: 0.088;
+  --dy: 0.219;
+  width: calc(var(--seal-d) * 0.7556);
+  height: calc(var(--seal-d) * 0.7138);
+}
+
+.gs-piece-6 {
+  --dx: -0.379;
+  --dy: 0.217;
+  width: calc(var(--seal-d) * 0.3987);
+  height: calc(var(--seal-d) * 0.4598);
+}
+
+.env-flecks {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+}
+
+.env-fleck {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 2px;
+  background: var(--gold-fleck);
+  border-radius: 50%;
+}
+
+.env-flash {
+  top: 50%;
+  left: 50%;
+  z-index: 12;
+  width: calc(var(--seal-d) * 2.2);
+  height: calc(var(--seal-d) * 2.2);
+  background: radial-gradient(circle, #fff6e0 0%, var(--gold-flash) 45%, transparent 72%);
+  opacity: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
 }
 
 /* Puzzle card */
 
 .has-band .container {
-  margin-top: -2.25rem;
+  margin-top: -24px;
   padding-top: 0;
 }
 
@@ -1442,30 +1588,6 @@ button.primary:hover {
 
 /* Motion */
 
-@keyframes seal-rise {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-@keyframes seal-crack-left {
-  to {
-    transform: translateX(-8px) rotate(-2deg);
-  }
-}
-
-@keyframes seal-crack-right {
-  to {
-    transform: translateX(8px) rotate(2deg);
-  }
-}
-
 @keyframes tile-pop {
   50% {
     transform: scale(1.08);
@@ -1525,15 +1647,8 @@ button.primary:hover {
 /* Desktop */
 
 @media (min-width: 1024px) {
-  .has-band .band {
-    --cap-room: 126px;
-    --cap-offset: 0.146;
-    --seal-size: 900px;
-    --seal-top-sealed: 113px;
-  }
-
-  [data-state="opened"] .band {
-    --seal-top: 250px;
+  .env-stage {
+    --seal-d: 68px;
   }
 
   .site-header {
@@ -1564,21 +1679,16 @@ button.primary:hover {
     justify-content: flex-end;
   }
 
-  .band-date {
-    font-size: 0.95rem;
+  .env-face-date {
+    font-size: 11px;
   }
 
-  .seal-title {
-    font-size: 1.6rem;
-  }
-
-  .seal-label {
-    font-size: 0.75rem;
+  .env-face-title {
+    font-size: 21px;
   }
 
   .has-band .container {
     max-width: 760px;
-    margin-top: -3.75rem;
   }
 
   .puzzle,

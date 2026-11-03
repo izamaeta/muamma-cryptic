@@ -1,6 +1,5 @@
 import {
   dropLetters,
-  fadeWash,
   flash,
   flipTile,
   flipTiles,
@@ -11,6 +10,7 @@ import {
   toast,
   wait,
 } from "./motion.js";
+import envelope from "./envelope.js";
 import { resultWindow, revealAsker } from "./result.js";
 
 const section = document.querySelector(".puzzle");
@@ -33,9 +33,6 @@ if (section) {
   const countdowns = [...section.querySelectorAll(".countdown")];
   const openResult = section.querySelector(".result-open");
   const timer = section.querySelector(".chip.timer");
-  const wash = document.querySelector(".band-wash");
-  const sealCap = document.querySelector(".seal-cap");
-  const sealLabel = document.querySelector(".seal-label");
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
   const result = resultWindow(section.querySelector(".result"));
   const askReveal = revealAsker(section.querySelector(".confirm"));
@@ -200,21 +197,6 @@ if (section) {
     return data;
   }
 
-  function breakSeal(solved) {
-    if (sealLabel) {
-      sealLabel.textContent = solved ? "Mühür kırıldı" : "Mühür açıldı";
-    }
-    if (solved && sealCap && !sealCap.querySelector(".seal-note")) {
-      const note = document.createElement("p");
-      note.className = "seal-note";
-      note.textContent = "Muamma çözüldü!";
-      sealCap.append(note);
-    }
-    const fading = fadeWash(wash);
-    document.body.dataset.state = "opened";
-    return fading;
-  }
-
   async function finish(data, message, solved) {
     form.hidden = true;
     helpers.hidden = true;
@@ -231,7 +213,11 @@ if (section) {
     }
 
     stopTimer(data.duration);
-    const sealing = breakSeal(solved);
+    const breaking = envelope
+      ? solved
+        ? envelope.solve()
+        : envelope.reveal()
+      : Promise.resolve();
     await wait(motionOk() ? 200 : 0);
 
     solution.querySelector(".answer").textContent = data.answer;
@@ -241,7 +227,8 @@ if (section) {
     enableShare(data.share);
     startCountdown(data.next_in);
 
-    await Promise.all([riseIn(solution), spinNumber(streak, data.streak), sealing]);
+    await Promise.all([riseIn(solution), spinNumber(streak, data.streak), breaking]);
+    if (!envelope) document.body.dataset.state = "opened";
 
     if (result) {
       result.fill(data, solved);
@@ -306,6 +293,7 @@ if (section) {
         feedback.textContent = "Olmadı, tekrar dene.";
         flash(tileBox, "shake", 340);
         flash(tileBox, "wrong", 540);
+        envelope?.shake();
         addWrongGuess(lettersOf(guess).join(""));
         await wait(motionOk() ? 260 : 0);
         await clearTyped();

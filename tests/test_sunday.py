@@ -32,7 +32,6 @@ def test_sunday_puzzle_gets_the_hard_title(client):
     add_puzzle(publish_date=SUNDAY, difficulty=3)
     html = client.get("/").get_data(as_text=True)
     assert "Haftanın çetin muamması" in html
-    assert "MÜHÜRLÜ" in html
 
 
 def test_other_days_keep_their_title(client):
