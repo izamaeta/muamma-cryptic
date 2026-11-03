@@ -36,6 +36,20 @@ def test_pages_have_canonical_and_share_tags(client):
     html = client.get("/nasil-oynanir").get_data(as_text=True)
     assert '<link rel="canonical" href="https://muamma.test/nasil-oynanir">' in html
     assert '<meta property="og:title" content="Muamma nasıl çözülür? Cryptic bulmaca rehberi">' in html
+    assert '<meta property="og:description"' in html
+    assert "og:image" not in html
+    assert "twitter:image" not in html
+
+
+def test_share_image_is_not_referenced(client):
+    html = client.get("/").get_data(as_text=True)
+    assert "og.png" not in html
+    import os
+
+    og_path = os.path.join(
+        os.path.dirname(__file__), "..", "muamma", "static", "img", "og.png"
+    )
+    assert not os.path.exists(og_path)
 
 
 def test_personal_pages_are_not_indexed(client):

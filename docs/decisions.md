@@ -1012,3 +1012,58 @@ the editor is the one who knows whether this is that case. The check
 lives in `muamma/puzzles.py` next to the other things that are true about
 a puzzle, with a thin wrapper in `admin/services.py` beside the Sunday
 and long word warnings, so the rule has one definition and two callers.
+
+## The envelope
+
+The sealed-secret idea used to be one giant SVG seal rising out of the
+band. It is now an envelope: a hero object in the band, separate from the
+game card below it, which keeps the game's own layout (chips, clue,
+tiles, assists) untouched by whatever the seal is doing. Separating them
+also means the envelope can carry its own small timeline — rise on load,
+shake on a wrong guess, break on solving — without reaching into puzzle
+state, and the puzzle card never has to know the envelope exists.
+
+Every layer — the pocket, the flap, the shadows, the gold seal, its six
+broken pieces — is a bitmap, not an SVG or a CSS shape. The seal in
+particular reads as an object with weight: an embossed wax medallion with
+a real light source, cracks that follow a real pour, a ribbon of liner
+behind the flap. None of that is practical to fake in SVG at this size
+without it reading as a sticker. Bitmaps also cost nothing at runtime: the
+scene is pure positioning and `transform`/`opacity` animation over
+pre-rendered pixels, which is what makes it affordable to run at 44 CSS
+custom properties deep (`--env-w` down to `--seal-d`) without a single
+`filter` or recomputed gradient.
+
+At the moment the seal cracks, the six pieces are swapped in for the
+`cracked` image mid-flight, under a radial gold-white flash at its
+brightest frame. The crop each piece was cut from does not line up
+pixel-for-pixel with the cracked seal's own crack lines — close, not
+exact — and asking an artist to cut them so they tile perfectly was not
+worth it for something on screen for one frame. The flash is loud enough
+that the eye is following the light, not the seam, which is a cheaper fix
+than a perfect crop and reads just as well.
+
+The band stays navy in every state now, where it used to invert to pale
+sky on an opened puzzle. The inversion was a trick worth retiring: the
+envelope itself now carries the state change (flap open or closed, seal
+there or not, the letter's own text), so the band does not need to say it
+a second time with colour. A navy band that never changes is also one the
+header's icons and the streak pill never have to recolour against,
+removing a whole set of `[data-state="opened"]` overrides for free.
+
+Revealing the answer plays the same choreography at a lower register:
+no tension beat, no flash, no `navigator.vibrate`, no gold dust, the flap
+a quarter slower, the pieces drifting apart instead of bursting. Solving
+is a small win worth celebrating; asking to see the answer is not — the
+same seal breaking two different ways is how the page says that without
+a second set of words.
+
+Loading splits the same way the moment does. `env-pocket`,
+`env-flap-front`, `env-flap-shadow`, `env-shadow`, `seal-shadow` and
+`whole` are the first frame of a sealed page and are preloaded for it;
+`cracked`, the six pieces, `env-back`, `env-flap-back` and `letter` are
+only needed once the seal breaks, so they load on idle after first paint
+and are decoded before the scene is allowed to start, so the first
+dropped frame is never the crack itself. A puzzle rendered already
+finished skips the gold-seal images entirely — `env-seal-mount` is not in
+the page at all — since nothing there is ever shown again.
